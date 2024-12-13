@@ -4,7 +4,6 @@
   <div id="form-platform" style="overflow: hidden;display: flex;align-items: center">
     <div style="width: 100%">
       <div style="text-align: center;font-size: 1.5rem;color: grey;">OPEN FIT TOOLS</div>
-
       <v-divider style="margin-top: 5%"></v-divider>
       <v-btn variant="text" style="color: grey" rounded="0" @click="passwordLoginButtonClickHandler">
         密码登录
@@ -55,13 +54,13 @@
           </v-form>
           <v-btn variant="text" style="color: grey;float: right" @click="retrieveButtonClickHandler">忘记密码</v-btn>
           <v-btn variant="text" style="color: grey;float: right" @click="registerButtonClickHandler">注册</v-btn>
-          <v-btn variant="outlined" id="login-button" :disabled="!status.formSubmitEnable">登录</v-btn>
+          <v-btn variant="outlined" id="login-button" :disabled="!status.formSubmitEnable" @click="loginHandler">登录</v-btn>
         </div>
       </div>
 
       <div style="height: 100%" v-if="displayStatus.register">
         <div style="margin-top: 5%;height: 50%">
-          <v-form v-model="status.formSubmitEnable">
+          <v-form v-model="status.registerEnable">
             <v-text-field
               label="用户名"
               variant="outlined"
@@ -103,9 +102,26 @@
                   v-model="formFields.eMail"
                   :rules="[rules.required, rules.email]">
                 </v-text-field>
-                <v-btn variant="outlined" style="width: 20%;height: 3.5rem;color: grey;margin-left: 2%" :disabled="!(status.identifyingCodeSendingEnabled && !status.identifyingCodeSendingCooldown)" @click="identifyingCodeSendingButtonClickHandler">
-                  {{status.identifyingCodeSendingButtonText}}
-                </v-btn>
+            </div>
+            <div  style="width: 100%;display: flex;margin-top: 2%;">
+              <v-img
+                style="margin-top: 0.5%;margin-right: 2%"
+                width="120"
+                height="50"
+                @click=captchaReloadHandler
+                :src="`data:image/png;base64,${status.captchaImg}`"/>
+              <v-text-field
+                label=""
+                variant="outlined"
+                id="captchaCode"
+                style="width: 68%;"
+                prepend-inner-icon="mdi-alphabetical-variant"
+                v-model="formFields.captchaCode"
+                :rules="[rules.required, rules.captcha]">
+              </v-text-field>
+              <v-btn variant="outlined" style="width: 20%;height: 3.5rem;color: grey;margin-left: 2%" :disabled="!(status.captchaEnable && status.identifyingCodeSendingEnabled && !status.identifyingCodeSendingCooldown)" @click="identifyingCodeSendingButtonClickHandler">
+                {{status.identifyingCodeSendingButtonText}}
+              </v-btn>
             </div>
             <v-text-field
               label="验证码"
@@ -116,7 +132,7 @@
               style="margin-top: 2%">
             </v-text-field>
             <v-btn variant="text" style="color: grey;float: right" @click="returnLoginButtonClickHandler">返回登录</v-btn>
-            <v-btn variant="outlined" id="login-button" :disabled="!status.formSubmitEnable">注册</v-btn>
+            <v-btn variant="outlined" id="login-button" :disabled="!status.registerEnable" @click="registerHandler">注册</v-btn>
           </v-form>
         </div>
       </div>
@@ -215,13 +231,38 @@
           </v-form>
         </div>
       </div>
+      <div>
+        <v-snackbar
+          v-model="status.snackbarShow"
+          :timeout="status.snackbarTimeout"
+          variant="outlined"
+          locaton = "end bottom"
+          :color="status.snackbarColor"
+        >
+          {{ status.snackbarText }}
+
+          <template v-slot:actions>
+            <v-btn
+              color="gray"
+              variant="text"
+              @click="status.snackbarShow = false"
+            >
+              关闭
+            </v-btn>
+          </template>
+        </v-snackbar>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="js">
-import {onMounted, onUnmounted, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import AMapLoader from "@amap/amap-jsapi-loader";
+import requestInstance from "@/networks/request";
+import {sha256} from "js-sha256";
+import * as loginRequest from "@/networks/loginRequest";
+import {grey} from "vuetify/util/colors";
 
 let map = null;
 onMounted(() => {
@@ -266,20 +307,28 @@ const initialFormFields ={
   passwordCheck: "",
   eMail: "",
   phoneNumber: "",
-  identifyingCode: ""
+  identifyingCode: "",
+  captchaCode: ""
 }
 
 const initialStatus = {
+  snackbarColor:"red",
   formSubmitEnable:false,
+  registerEnable:false,
   email: '',
   username: '',
+  captchaImg: '',
   password_visible: false,
   password_check_visible: false,
   identifyingCodeSendingEnabled: false,
   identifyingCodeSendingCooldown: false,
   identifyingCodeSendingButtonText: "发送验证码",
   passwordReady:false,
-  passwordCheckReady:false
+  passwordCheckReady:false,
+  captchaEnable:false,
+  snackbarShow: false,
+  snackbarText: '',
+  snackbarTimeout: 2000,
 }
 
 let formFields = reactive({
@@ -300,6 +349,12 @@ let rules={
       else status.identifyingCodeSendingEnabled=false
     }
     return pattern.test(value) || '错误的邮箱格式'
+  },
+  captcha: value => {
+    if(typeof value == 'string' && value.length > 0){
+      status.captchaEnable = true
+    }else status.captchaEnable = false
+    return typeof value == 'string' && value.length > 0 || '答案不能为空'
   },
   identifyingCode: value=>{
     const pattern = /\d{6}/
@@ -335,6 +390,7 @@ function statusReset(){
   })
 }
 function registerButtonClickHandler(){
+  getCaptchaImg();
   statusReset();
   displayStatus.login = false;
   displayStatus.register = true;
@@ -376,18 +432,60 @@ function thirdPartyLoginButtonClickHandler(){
   displayStatus.thirdParty=true;
 }
 function identifyingCodeSendingButtonClickHandler(){
-  status.identifyingCodeSendingCooldown=true;
-  let counter = 6;
-  status.identifyingCodeSendingButtonText = counter + 's';
-  let countDowner = setInterval(()=>{
-    counter--;
+  loginRequest.sendEmailCaptcha(formFields.eMail, status.captchaHashCode, formFields.captchaCode).then(res=>{
+    status.identifyingCodeSendingCooldown=true;
+    let counter = 6;
     status.identifyingCodeSendingButtonText = counter + 's';
-    if(counter===0) {
-      status.identifyingCodeSendingButtonText= "发送验证码"
-      status.identifyingCodeSendingCooldown=false;
-      clearInterval(countDowner)
+    let countDowner = setInterval(()=>{
+      counter--;
+      status.identifyingCodeSendingButtonText = counter + 's';
+      if(counter===0) {
+        status.identifyingCodeSendingButtonText= "发送验证码"
+        status.identifyingCodeSendingCooldown=false;
+        clearInterval(countDowner)
+      }
+    },1000)
+  }).catch(err=>{
+    status.snackbarColor = "red";
+    status.snackbarText= err.response.data.message;
+    status.snackbarShow = true;
+  })
+}
+function captchaReloadHandler(){
+  getCaptchaImg();
+}
+function getCaptchaImg() {
+  loginRequest.getCaptcha().then(result=>{
+      status.captchaImg = result.data.data.base64Img;
+      status.captchaHashCode = result.data.data.hashCode;
+      console.log();
     }
-  },1000)
+  )
+}
+
+function registerHandler(){
+  loginRequest.register(formFields.username, formFields.password, formFields.eMail, formFields.identifyingCode).then(res=>{
+    returnLoginButtonClickHandler()
+    status.snackbarColor = "grey";
+    status.snackbarText= "注册成功，请登录";
+    status.snackbarShow = true;
+  }).catch(err=>{
+    status.snackbarColor = "red";
+    status.snackbarText= err.response.data.message;
+    status.snackbarShow = true;
+  })
+}
+async function loginHandler(){
+  let encryptedPassword = sha256(formFields.password);
+  encryptedPassword = sha256(formFields.username+encryptedPassword);
+  loginRequest.login(formFields.username,encryptedPassword).then(re=>{
+      console.log(re)
+  }).catch(err=>{
+      console.log(err)
+  })
+  formFields.password="";
+  formFields.passwordCheck="";
+  console.log(formFields.password);
 }
 </script>
 <style  scoped>
