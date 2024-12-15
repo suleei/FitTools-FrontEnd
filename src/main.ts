@@ -13,12 +13,12 @@ import App from './App.vue'
 // Composables
 import { createApp } from 'vue'
 import LoginView from "@/views/LoginView.vue";
-import HomeView from "@/views/HomeView.vue";
-import {createMemoryHistory, createRouter, createWebHistory} from "vue-router";
+import {createRouter, createWebHistory} from "vue-router";
+import MainView from "@/views/MainView.vue";
 
 
 const routes = [
-    { path:'/', component: HomeView},
+    { path:'/', component: MainView},
     { path:'/login', component: LoginView}
 ]
 

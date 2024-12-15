@@ -276,10 +276,8 @@
 <script setup lang="js">
 import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import AMapLoader from "@amap/amap-jsapi-loader";
-import requestInstance from "@/networks/request";
-import {sha256} from "js-sha256";
 import * as loginRequest from "@/networks/loginRequest";
-import {grey} from "vuetify/util/colors";
+import {useRouter} from "vue-router";
 
 let map = null;
 onMounted(() => {
@@ -358,6 +356,8 @@ let formFields = reactive({
 let status = reactive({
   ...initialStatus
 })
+
+let router = useRouter()
 
 let rules={
   required: value => !!value || '必填字段',
@@ -530,13 +530,13 @@ function registerHandler(){
     status.snackbarShow = true;
   })
 }
-async function loginHandler(){
+function loginHandler(){
   loginRequest.login(formFields.username,formFields.password).then(re=>{
     formFields.password="";
-    status.snackbarColor = "grey";
-    status.snackbarText= "登录成功";
-    status.snackbarShow = true;
+    sessionStorage.setItem("jwt",re.data.data);
+    router.push({'path':'/'});
   }).catch(err=>{
+    console.log(err)
     status.snackbarColor = "red";
     status.snackbarText= err.response.data.message;
     status.snackbarShow = true;
