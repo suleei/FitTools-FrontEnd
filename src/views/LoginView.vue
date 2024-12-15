@@ -4,7 +4,7 @@
   <div id="form-platform" style="overflow: hidden;display: flex;align-items: center">
     <div style="width: 100%">
       <div style="text-align: center;font-size: 1.5rem;color: grey;">OPEN FIT TOOLS</div>
-      <v-divider style="margin-top: 5%"></v-divider>
+<!--      <v-divider style="margin-top: 5%"></v-divider>
       <v-btn variant="text" style="color: grey" rounded="0" @click="passwordLoginButtonClickHandler">
         密码登录
       </v-btn>
@@ -14,8 +14,8 @@
       <v-btn variant="text" style="color: grey" rounded="0" @click="thirdPartyLoginButtonClickHandler">
         第三方登录
       </v-btn>
-      <v-divider></v-divider>
-      <div style="height: 100%" v-if="displayStatus.thirdParty">
+      <v-divider></v-divider>-->
+<!--      <div style="height: 100%" v-if="displayStatus.thirdParty">
         <div style="margin-top: 5%;height: 50%;">
           <div style="display: flex;justify-content: space-between;width: 50%;margin: 10% auto">
             <v-btn icon="mdi-qqchat" variant="outlined" style="color: grey" size="x-large"></v-btn>
@@ -28,7 +28,7 @@
             <v-btn icon="mdi-android" variant="outlined" style="color: grey" size="x-large"></v-btn>
           </div>
         </div>
-      </div>
+      </div>-->
       <div style="height: 100%" v-if="displayStatus.login">
         <div style="margin-top: 5%;height: 50%">
           <v-form v-model="status.formSubmitEnable">
@@ -150,7 +150,7 @@
             </v-text-field>
             <div  style="width: 100%;display: flex;margin-top: 2%;">
               <v-text-field
-                label="绑定邮箱"
+                label="邮箱"
                 variant="outlined"
                 id="password-check"
                 style="width: 68%;"
@@ -158,8 +158,25 @@
                 v-model="formFields.eMail"
                 :rules="[rules.required, rules.email]">
               </v-text-field>
-              <v-btn variant="outlined" style="width: 20%;height: 3.5rem;color: grey;margin-left: 2%" :disabled="!(status.identifyingCodeSendingEnabled && !status.identifyingCodeSendingCooldown)" @click="identifyingCodeSendingButtonClickHandler">
-                {{status.identifyingCodeSendingButtonText}}
+            </div>
+            <div  style="width: 100%;display: flex;margin-top: 2%;">
+              <v-img
+                style="margin-top: 0.5%;margin-right: 2%"
+                width="120"
+                height="50"
+                @click=captchaReloadHandler
+                :src="`data:image/png;base64,${status.captchaImg}`"/>
+              <v-text-field
+                label=""
+                variant="outlined"
+                id="captchaCode"
+                style="width: 68%;"
+                prepend-inner-icon="mdi-alphabetical-variant"
+                v-model="formFields.captchaCode"
+                :rules="[rules.required, rules.captcha]">
+              </v-text-field>
+              <v-btn variant="outlined" style="width: 20%;height: 3.5rem;color: grey;margin-left: 2%"  @click="retrieveIdentifyingCodeSendingButtonClickHandler">
+                {{status.retrieveIdentifyingCodeSendingButtonText}}
               </v-btn>
             </div>
             <v-text-field
@@ -194,12 +211,12 @@
               style="margin-top: 2%;">
             </v-text-field>
             <v-btn variant="text" style="color: grey;float: right" @click="returnLoginButtonClickHandler">返回登录</v-btn>
-            <v-btn variant="outlined" id="login-button" :disabled="!status.formSubmitEnable">找回密码</v-btn>
+            <v-btn variant="outlined" id="login-button" :disabled="!status.formSubmitEnable" @click="userRetrieve">账户找回</v-btn>
           </v-form>
         </div>
       </div>
 
-      <div style="height: 100%" v-if="displayStatus.message">
+<!--      <div style="height: 100%" v-if="displayStatus.message">
         <div style="margin-top: 5%;height: 50%">
           <v-form v-model="status.formSubmitEnable">
             <div style="width: 100%;display: flex">
@@ -230,7 +247,7 @@
             </v-btn>
           </v-form>
         </div>
-      </div>
+      </div>-->
       <div>
         <v-snackbar
           v-model="status.snackbarShow"
@@ -323,6 +340,9 @@ const initialStatus = {
   identifyingCodeSendingEnabled: false,
   identifyingCodeSendingCooldown: false,
   identifyingCodeSendingButtonText: "发送验证码",
+  retrieveIdentifyingCodeSendingEnabled: false,
+  retrieveIdentifyingCodeSendingCooldown: false,
+  retrieveIdentifyingCodeSendingButtonText: "发送验证码",
   passwordReady:false,
   passwordCheckReady:false,
   captchaEnable:false,
@@ -397,6 +417,7 @@ function registerButtonClickHandler(){
 }
 
 function retrieveButtonClickHandler(){
+  getCaptchaImg();
   statusReset();
   displayStatus.retrieve = true;
   displayStatus.login = false;
@@ -451,6 +472,40 @@ function identifyingCodeSendingButtonClickHandler(){
     status.snackbarShow = true;
   })
 }
+
+function retrieveIdentifyingCodeSendingButtonClickHandler(){
+  loginRequest.sendRetrieveEmailCaptcha(formFields.username, formFields.eMail, status.captchaHashCode, formFields.captchaCode).then(res=>{
+    status.retrieveIdentifyingCodeSendingCooldown=true;
+    let counter = 6;
+    status.retrieveIdentifyingCodeSendingButtonText = counter + 's';
+    let countDowner = setInterval(()=>{
+      counter--;
+      status.retrieveIdentifyingCodeSendingButtonText = counter + 's';
+      if(counter===0) {
+        status.retrieveIdentifyingCodeSendingButtonText= "发送验证码"
+        status.retrieveIdentifyingCodeSendingCooldown=false;
+        clearInterval(countDowner)
+      }
+    },1000)
+  }).catch(err=>{
+    status.snackbarColor = "red";
+    status.snackbarText= err.response.data.message;
+    status.snackbarShow = true;
+  })
+}
+
+function userRetrieve(){
+  loginRequest.retrieve(formFields.username, formFields.password, formFields.eMail, formFields.identifyingCode).then(res=>{
+    returnLoginButtonClickHandler()
+    status.snackbarColor = "grey";
+    status.snackbarText= "账号找回成功，请登录";
+    status.snackbarShow = true;
+  }).catch(err=>{
+    status.snackbarColor = "red";
+    status.snackbarText= err.response.data.message;
+    status.snackbarShow = true;
+  })
+}
 function captchaReloadHandler(){
   getCaptchaImg();
 }
@@ -476,16 +531,16 @@ function registerHandler(){
   })
 }
 async function loginHandler(){
-  let encryptedPassword = sha256(formFields.password);
-  encryptedPassword = sha256(formFields.username+encryptedPassword);
-  loginRequest.login(formFields.username,encryptedPassword).then(re=>{
-      console.log(re)
+  loginRequest.login(formFields.username,formFields.password).then(re=>{
+    formFields.password="";
+    status.snackbarColor = "grey";
+    status.snackbarText= "登录成功";
+    status.snackbarShow = true;
   }).catch(err=>{
-      console.log(err)
+    status.snackbarColor = "red";
+    status.snackbarText= err.response.data.message;
+    status.snackbarShow = true;
   })
-  formFields.password="";
-  formFields.passwordCheck="";
-  console.log(formFields.password);
 }
 </script>
 <style  scoped>
