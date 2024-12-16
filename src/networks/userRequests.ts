@@ -17,3 +17,13 @@ export function getUserInfo(){
     method: "get",
   })
 }
+
+export function updateUsername(username:string){
+  return requestInstance.request({
+    url:'/user/username',
+    method: "put",
+    params: {
+      username: username
+    }
+  })
+}
