@@ -467,7 +467,7 @@ function identifyingCodeSendingButtonClickHandler(){
       }
     },1000)
   }).catch(err=>{
-    status.snackbarColor = "red";
+    status.snackbarColor = "darkred";
     status.snackbarText= err.response.data.message;
     status.snackbarShow = true;
   })
@@ -488,7 +488,7 @@ function retrieveIdentifyingCodeSendingButtonClickHandler(){
       }
     },1000)
   }).catch(err=>{
-    status.snackbarColor = "red";
+    status.snackbarColor = "darkred";
     status.snackbarText= err.response.data.message;
     status.snackbarShow = true;
   })
@@ -501,7 +501,7 @@ function userRetrieve(){
     status.snackbarText= "账号找回成功，请登录";
     status.snackbarShow = true;
   }).catch(err=>{
-    status.snackbarColor = "red";
+    status.snackbarColor = "darkred";
     status.snackbarText= err.response.data.message;
     status.snackbarShow = true;
   })
@@ -525,7 +525,7 @@ function registerHandler(){
     status.snackbarText= "注册成功，请登录";
     status.snackbarShow = true;
   }).catch(err=>{
-    status.snackbarColor = "red";
+    status.snackbarColor = "darkred";
     status.snackbarText= err.response.data.message;
     status.snackbarShow = true;
   })
@@ -533,11 +533,12 @@ function registerHandler(){
 function loginHandler(){
   loginRequest.login(formFields.username,formFields.password).then(re=>{
     formFields.password="";
-    sessionStorage.setItem("jwt",re.data.data);
+    sessionStorage.setItem("jwt",re.data.data.jwt);
+    sessionStorage.setItem("username",re.data.data.username);
     router.push({'path':'/'});
   }).catch(err=>{
     console.log(err)
-    status.snackbarColor = "red";
+    status.snackbarColor = "darkred";
     status.snackbarText= err.response.data.message;
     status.snackbarShow = true;
   })
@@ -553,6 +554,8 @@ function loginHandler(){
 }
 
 #form-platform{
+  border: 1px solid gray;
+
   position: absolute;
   left:65%;
   top:3%;
