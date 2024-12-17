@@ -12,14 +12,6 @@ export function login(username:string, password:string){
   })
 }
 
-
-export function getCaptcha(){
-  return requestInstance.request({
-    url:'/login/captcha',
-    method: "get",
-  })
-}
-
 export function sendEmailCaptcha(email:string, captchaHash:string, captchaCode:string){
   return requestInstance.request({
     url:'/login/register/email',

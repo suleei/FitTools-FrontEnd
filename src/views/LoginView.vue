@@ -278,6 +278,7 @@ import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import AMapLoader from "@amap/amap-jsapi-loader";
 import * as loginRequest from "@/networks/loginRequest";
 import {useRouter} from "vue-router";
+import * as catpchaRequest from "@/networks/captchaRequest";
 
 let map = null;
 onMounted(() => {
@@ -510,10 +511,9 @@ function captchaReloadHandler(){
   getCaptchaImg();
 }
 function getCaptchaImg() {
-  loginRequest.getCaptcha().then(result=>{
+  catpchaRequest.getCaptcha().then(result=>{
       status.captchaImg = result.data.data.base64Img;
       status.captchaHashCode = result.data.data.hashCode;
-      console.log();
     }
   )
 }
