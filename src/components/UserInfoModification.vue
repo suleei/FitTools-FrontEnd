@@ -2,7 +2,7 @@
 import {onMounted, ref} from "vue";
 import * as userRequests from "@/networks/userRequests";
 import * as captchaRequest from "@/networks/captchaRequest";
-
+const {geocoder, lnglat, autoComplete, map, marker} = defineProps(['geocoder','lnglat', 'autoComplete', 'map', 'marker']);
 let modificationField = ref("")
 let uploadAvatar = ref()
 let avatarURL = ref("")
@@ -15,6 +15,21 @@ let captchaBtnEnable = ref(true)
 let captchaBtnEnableN = ref(true)
 let captchaLineShow = ref(false)
 let email = ref("")
+let location = ref("")
+let detailLocation = ref({
+  district: null,
+  address: null,
+  name: null,
+  location: [null,null]
+})
+let address = ref({
+  district: null,
+  address: null,
+  name: null,
+  location: [null,null]
+})
+let timer = null
+let hintList = ref(null)
 let captchaImg = ref({
   data: "",
   hashCode: ""
@@ -71,6 +86,9 @@ function userInfoReload(){
     email.value = res.data.data.email;
   }).catch((err) => {
     console.log(err)
+  })
+  userRequests.getAddress().then((res) => {
+    address.value = res.data.data;
   })
 }
 
@@ -187,6 +205,65 @@ function emailModificationHandler(){
     },1000)
   })
 }
+
+function inputLocationChangeHandler(){
+  autoComplete.search(location.value, (status, result) => {
+    hintList.value = result.tips
+    console.log(hintList.value)
+  })
+  /*let hint = {
+    "id": "B0JRH7NL6S",
+    "name": "国家网络安全人才与创新基地网络安全学院(东2门)",
+    "district": "湖北省武汉市东西湖区",
+    "adcode": "420112",
+    "location": [
+      114.138579,
+      30.672819
+    ],
+    "address": "临空港大道与径河路交叉口西160米",
+    "typecode": "991400",
+    "city": []
+  }
+  itemSelectHandler(hint)*/
+}
+
+function itemSelectHandler(hint: any) {
+  detailLocation.value.name = hint.name;
+  detailLocation.value.district = hint.district;
+  detailLocation.value.address = hint.address;
+  detailLocation.value.location = [hint.location.lng, hint.location.lat];
+  hintList.value = null;
+  marker.setPosition(detailLocation.value.location);
+  marker.setMap(map);
+  map.setZoom(15);
+  map.panTo([detailLocation.value.location[0]-0.02,detailLocation.value.location[1]]);
+}
+
+function updateAddressHandler(){
+  userRequests.updateAddress(detailLocation.value).then((response) => {
+    userInfoReload()
+  }).catch((error) => {
+    WarnInfo.value = error.response.data.message;
+    setTimeout(()=>{
+      WarnInfo.value = ""
+    },1000)
+  })
+}
+
+/*function getLocation(){
+  geocoder.getAddress(lnglat,function(status, result) {
+    console.log(status, result);
+    if (status === 'complete'&&result.regeocode) {
+      var address = result.regeocode.formattedAddress;
+      console.log(address);
+    }else{
+      console.error('根据经纬度查询地址失败')
+    }
+  })
+  autoComplete.search("124", (status, result) => {
+    console.log(status, result);
+  })
+}*/
 </script>
 
 <template>
@@ -199,6 +276,23 @@ function emailModificationHandler(){
       <div style="margin-top: 1rem;" @click="modificationField=modificationField==='email'?'':'email'" class="hand-cursor">
         <div style="font-size: 1rem;color: grey">邮箱</div>
         <div style="font-size: 2rem;color: grey">{{email}}</div>
+      </div>
+      <div style="margin-top: 1rem;" @click="modificationField=modificationField==='address'?'':'address'" class="hand-cursor">
+<!--        <div style="font-size: 1rem;color: grey">通联地址</div>-->
+        <div >
+          <div >
+            <div><text style="color: gray">政区</text></div>
+            <div><text style="color: gray;font-size: 2rem">{{address.district}}</text></div>
+          </div>
+          <div >
+            <div><text style="color: gray">地址</text></div>
+            <div><text style="color: gray;font-size: 2rem">{{address.address}}</text></div>
+          </div>
+          <div>
+            <div><text style="color: gray">地点</text></div>
+            <div><text style="color: gray;font-size: 2rem">{{address.name}}</text></div>
+          </div>
+        </div>
       </div>
     </div>
     <div v-show="modificationField==='avatar'" id = "avatarUpload" class="Pad" style="display: flex;flex-direction: column">
@@ -301,6 +395,48 @@ function emailModificationHandler(){
       </div>
       <div style="text-align: center;color: darkred;">{{WarnInfoN}}</div>
     </div>
+    <div id="address" class="Pad" v-show="modificationField==='address'">
+      <div style="width: 90%;display: flex;margin:auto;margin-top:2rem;">
+        <v-text-field
+          label="通联地址"
+          variant="outlined"
+          style="width: 68%;"
+          prepend-inner-icon="mdi-alphabetical-variant"
+          v-model="location"
+        ></v-text-field>
+        <v-btn variant="outlined" style="width: 20%;height: 3.5rem;color: grey;margin-left: 2%" @click="inputLocationChangeHandler">搜索地址</v-btn>
+      </div>
+      <div v-show="detailLocation.district" style="margin:auto;width:90%;">
+        <div><text style="color: gray">政区</text></div>
+        <div><text style="color: gray;font-size: 2rem">{{detailLocation.district}}</text></div>
+      </div>
+      <div v-show="detailLocation.address" style="margin:auto;width:90%;">
+        <div><text style="color: gray">地址</text></div>
+        <div><text style="color: gray;font-size: 2rem">{{detailLocation.address}}</text></div>
+      </div>
+      <div v-show="detailLocation.name" style="margin:auto;width:90%;">
+        <div><text style="color: gray">地点</text></div>
+        <div><text style="color: gray;font-size: 2rem">{{detailLocation.name}}</text></div>
+      </div>
+      <div style="margin:auto;width:90%;text-align:center;">
+        <v-btn variant="outlined" style="width: 50%;height: 3.5rem;color: grey;margin: 1rem 1rem" @click="updateAddressHandler">修改地址</v-btn>
+      </div>
+      <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
+    </div>
+    <div class="Pad" style="width:auto;left: 50.6%;top: 41.5%" v-show="modificationField==='address' && hintList">
+      <v-list style="  background: rgba(255, 255, 255, .1); -webkit-backdrop-filter: blur(10px);backdrop-filter: blur(10px);">
+        <v-list-item
+          v-for="(hint,index) in hintList"
+          :key="index"
+          :title="hint.name"
+          :subtitle="hint.district"
+          class="hand-cursor"
+          @click="itemSelectHandler(hint)"
+          id = "selectedItem"
+        >
+        </v-list-item>
+      </v-list>
+    </div>
   </div>
 
 </template>
@@ -339,6 +475,11 @@ function emailModificationHandler(){
   top: 31.5%;
 }
 
+#address{
+  left: 20.6%;
+  top: 41.5%
+}
+
 .Pad{
   position: absolute;
   margin: 1rem;
@@ -352,6 +493,10 @@ function emailModificationHandler(){
 
 .hand-cursor{
   cursor: pointer;
+}
+
+#selectedItem:hover{
+  background: rgba(0, 0, 0, 0.1);
 }
 
 </style>

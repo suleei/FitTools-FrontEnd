@@ -12,6 +12,10 @@ const username = ref("");
 const infoPadDisplay = ref(false);
 const displayItem = ref("")
 let userAvatar = ref("")
+let geocoder = null
+let autoComplete = null
+let lnglat = ref(["",""])
+let marker = null
 
 const router = useRouter();
 
@@ -21,12 +25,12 @@ onMounted(() => {
     login.value = true;
   }
   window._AMapSecurityConfig = {
-    securityJsCode: "c27ca67686a87d9e69ddf86ac03be353",
+    securityJsCode: "eef4c8683731d938839a4d1a9eebfbdc",
   };
   AMapLoader.load({
-    key: "ada844b393d9be19a34cc6c4cfba1cbc\t", // 申请好的Web端开发者Key，首次调用 load 时必填
+    key: "8a728012124faeb45f08ce08205a9358\t", // 申请好的Web端开发者Key，首次调用 load 时必填
     version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
-    plugins: ["AMap.Scale"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
+    plugins: ["AMap.Geocoder", "AMap.AutoComplete", "AMap.Marker"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
   })
     .then((AMap) => {
       map = new AMap.Map("container", {
@@ -35,6 +39,12 @@ onMounted(() => {
         mapStyle: "amap://styles/whitesmoke", //设置地图的显示样式
         showLabel: false //不显示地图文字标记,
       });
+      map.on("click", (event) => {
+        lnglat.value = [event.lnglat.lng, event.lnglat.lat]
+      });
+      geocoder = new AMap.Geocoder();
+      autoComplete = new AMap.AutoComplete();
+      marker = new AMap.Marker();
     })
     .catch((e) => {
       console.log(e);
@@ -57,13 +67,25 @@ function userInfoReload(){
 function loginRedirectHandler(){
   router.push({path:'/login'})
 }
+
+function logoutHandler(){
+  sessionStorage.removeItem("jwt");
+  sessionStorage.removeItem("username");
+  router.push({path:'/login'});
+}
 </script>
 
 <template>
-  <div id="container"></div>
+  <div id="container">
+  </div>
   <div id="menu" style="overflow: hidden;display: flex;align-items: center">
-    <div class="menuItem" ></div>
-    <div class="menuItem" ></div>
+    <div class="menuItem">
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem='AddCommunicationLog'">
+        新建日志
+      </v-btn>
+    </div>
+    <div class="menuItem" >
+    </div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
@@ -88,13 +110,13 @@ function loginRedirectHandler(){
       <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;" @click="displayItem='InfoModification'">
         修改个人信息
       </v-btn>
-      <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;color: darkred">
+      <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;color: darkred" @click="logoutHandler">
         退出账号
       </v-btn>
     </div>
   </div>
   <div>
-    <UserInfoModification v-show="displayItem==='InfoModification'" @infoUpdate="userInfoReload"></UserInfoModification>
+    <UserInfoModification v-show="displayItem==='InfoModification'" @infoUpdate="userInfoReload" :geocoder="geocoder" :lnglat="lnglat" :autoComplete="autoComplete" :marker = "marker" :map="map"></UserInfoModification>
   </div>
 </template>
 

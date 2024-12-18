@@ -72,3 +72,24 @@ export function modifyEmail(jwt:string, email:string, captcha:string){
     }
   })
 }
+
+export function updateAddress(location: any){
+  return requestInstance.request({
+    url:'/user/address',
+    method: "post",
+    data: {
+      district: location.district,
+      address: location.address,
+      name: location.name,
+      longitude: location.location[0],
+      latitude: location.location[1],
+    }
+  })
+}
+
+export function getAddress(){
+  return requestInstance.request({
+    url:'/user/address',
+    method: "get"
+  })
+}
