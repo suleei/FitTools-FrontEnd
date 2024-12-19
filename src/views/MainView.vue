@@ -4,6 +4,7 @@ import AMapLoader from "@amap/amap-jsapi-loader";
 import {useRouter} from "vue-router";
 import UserInfoModification from "@/components/UserInfoModification.vue";
 import * as userRequests from "@/networks/userRequests";
+import AddLog from "@/components/AddLog.vue";
 
 let map:any = null;
 
@@ -16,6 +17,7 @@ let geocoder = null
 let autoComplete = null
 let lnglat = ref(["",""])
 let marker = null
+let district = null
 
 const router = useRouter();
 
@@ -30,7 +32,7 @@ onMounted(() => {
   AMapLoader.load({
     key: "8a728012124faeb45f08ce08205a9358\t", // 申请好的Web端开发者Key，首次调用 load 时必填
     version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
-    plugins: ["AMap.Geocoder", "AMap.AutoComplete", "AMap.Marker"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
+    plugins: ["AMap.Geocoder", "AMap.AutoComplete", "AMap.Marker","AMap.DistrictSearch"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
   })
     .then((AMap) => {
       map = new AMap.Map("container", {
@@ -45,6 +47,11 @@ onMounted(() => {
       geocoder = new AMap.Geocoder();
       autoComplete = new AMap.AutoComplete();
       marker = new AMap.Marker();
+      var opts = {
+        subdistrict: 1,   //返回下一级行政区
+        showbiz: false  //最后一级返回街道信息
+      };
+      district = new AMap.DistrictSearch(opts);//注意：需要使用插件同步下发功能才能这样直接使用
     })
     .catch((e) => {
       console.log(e);
@@ -80,7 +87,7 @@ function logoutHandler(){
   </div>
   <div id="menu" style="overflow: hidden;display: flex;align-items: center">
     <div class="menuItem">
-      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem='AddCommunicationLog'">
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='AddCommunicationLog'?'':'AddCommunicationLog'">
         新建日志
       </v-btn>
     </div>
@@ -107,7 +114,7 @@ function logoutHandler(){
       </v-btn>
     </div>
     <div style="height: 66.6%" id="infoPad" v-show="infoPadDisplay" @mouseover="infoPadDisplay= true" @mouseout="infoPadDisplay= false">
-      <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;" @click="displayItem='InfoModification'">
+      <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;" @click="displayItem=displayItem==='InfoModification'?'':'InfoModification'">
         修改个人信息
       </v-btn>
       <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;color: darkred" @click="logoutHandler">
@@ -116,7 +123,10 @@ function logoutHandler(){
     </div>
   </div>
   <div>
-    <UserInfoModification v-show="displayItem==='InfoModification'" @infoUpdate="userInfoReload" :geocoder="geocoder" :lnglat="lnglat" :autoComplete="autoComplete" :marker = "marker" :map="map"></UserInfoModification>
+    <UserInfoModification v-if="displayItem==='InfoModification'" @infoUpdate="userInfoReload" :geocoder="geocoder" :lnglat="lnglat" :autoComplete="autoComplete" :marker = "marker" :map="map"></UserInfoModification>
+  </div>
+  <div>
+    <AddLog v-if="displayItem==='AddCommunicationLog'" :map="map" :districtFind="district"> </AddLog>
   </div>
 </template>
 

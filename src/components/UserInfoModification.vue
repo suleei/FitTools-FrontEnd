@@ -242,6 +242,9 @@ function itemSelectHandler(hint: any) {
 function updateAddressHandler(){
   userRequests.updateAddress(detailLocation.value).then((response) => {
     userInfoReload()
+    setTimeout(()=>{
+      marker.setMap(null)
+    },10000)
   }).catch((error) => {
     WarnInfo.value = error.response.data.message;
     setTimeout(()=>{
@@ -418,7 +421,7 @@ function updateAddressHandler(){
         <div><text style="color: gray">地点</text></div>
         <div><text style="color: gray;font-size: 2rem">{{detailLocation.name}}</text></div>
       </div>
-      <div style="margin:auto;width:90%;text-align:center;">
+      <div style="margin:auto;width:90%;text-align:center;" v-show="detailLocation.address">
         <v-btn variant="outlined" style="width: 50%;height: 3.5rem;color: grey;margin: 1rem 1rem" @click="updateAddressHandler">修改地址</v-btn>
       </div>
       <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
