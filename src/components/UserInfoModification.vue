@@ -16,6 +16,7 @@ let captchaBtnEnableN = ref(true)
 let captchaLineShow = ref(false)
 let email = ref("")
 let location = ref("")
+let modifiedCallSign = ref("")
 let detailLocation = ref({
   district: null,
   address: null,
@@ -53,6 +54,8 @@ let captchaObjN = ref({
   buttonInfo: "发送验证码",
 })
 
+let callSign = ref("")
+
 const emit = defineEmits(['infoUpdate'])
 
 onMounted(() => {
@@ -84,6 +87,7 @@ function userInfoReload(){
     userAvatar.value = res.data.data.avatar;
     username.value = res.data.data.username;
     email.value = res.data.data.email;
+    callSign.value =  res.data.data.call_sign
   }).catch((err) => {
     console.log(err)
   })
@@ -128,6 +132,17 @@ function avatarUploadHandler(){
 function usernameModificationHandler(){
   userRequests.updateUsername(modifiedUserName.value).then(response => {
     sessionStorage.setItem("jwt",response.data.data);
+    userInfoReload()
+  }).catch(error => {
+    WarnInfo.value = error.response.data.message;
+    setTimeout(()=>{
+      WarnInfo.value = ""
+    },1000)
+  })
+}
+
+function callSignModificationHandler(){
+  userRequests.updateCallSign(modifiedCallSign.value).then(response => {
     userInfoReload()
   }).catch(error => {
     WarnInfo.value = error.response.data.message;
@@ -297,6 +312,10 @@ function updateAddressHandler(){
           </div>
         </div>
       </div>
+      <div style="margin-top: 1rem;" @click="modificationField=modificationField==='call_sign'?'':'call_sign'" class="hand-cursor">
+        <div style="font-size: 1rem;color: grey">呼号</div>
+        <div style="font-size: 2rem;color: grey">{{callSign}}</div>
+      </div>
     </div>
     <div v-show="modificationField==='avatar'" id = "avatarUpload" class="Pad" style="display: flex;flex-direction: column">
       <v-file-input label="上传文件" accept="image/*" variant="outlined" style="width: 90%;margin-left: auto;margin-right: auto;margin-top: 1.5rem" v-model="uploadAvatar" @update:model-value="avatarLoadedHandler"></v-file-input>
@@ -440,6 +459,18 @@ function updateAddressHandler(){
         </v-list-item>
       </v-list>
     </div>
+    <div v-show="modificationField==='call_sign'" id = "callSignModification" class="Pad" style="display: flex;flex-direction: column;">
+      <text style="color: darkred;width: 90%;margin: auto;margin-top: 2%">呼号是您进行通联时的标识，请务必保证使用真实属于您的呼号。若您的呼号被他人占用，请联系工作人员找回。占用他人呼号将导致您的账号被封禁并丢失所有数据。</text>
+      <v-text-field
+        style="width: 80%; margin: auto; margin-top: 2rem"
+        label="呼号"
+        variant="outlined"
+        prepend-inner-icon="mdi-account-outline"
+        v-model="modifiedCallSign"
+        counter maxlength="10"/>
+      <v-btn  v-show="modifiedCallSign" variant="plain" style="width: 50%; margin:auto;border: gray 1px solid;border-radius: 0.5rem;height: 3rem;margin-top: 1rem;margin-bottom: 1rem;color: darkred" @click="callSignModificationHandler" >更改呼号</v-btn>
+      <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
+    </div>
   </div>
 
 </template>
@@ -481,6 +512,11 @@ function updateAddressHandler(){
 #address{
   left: 20.6%;
   top: 41.5%
+}
+
+#callSignModification{
+  left: 20.6%;
+  top: 64.5%;
 }
 
 .Pad{

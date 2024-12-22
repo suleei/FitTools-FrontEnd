@@ -93,3 +93,13 @@ export function getAddress(){
     method: "get"
   })
 }
+
+export function updateCallSign(callSign:string){
+  return requestInstance.request({
+    url:'/user/call_sign',
+    method: "put",
+    params: {
+      callSign: callSign
+    }
+  })
+}

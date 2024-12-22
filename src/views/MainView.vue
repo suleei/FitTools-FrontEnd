@@ -99,8 +99,10 @@ function logoutHandler(){
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
-    <div class="menuItem" ></div>
     <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='DeviceManagement'?'':'DeviceManagement'">
+        管理设备
+      </v-btn>
     </div>
   </div>
   <div id="userInfoMenu" style="text-align: center;height: 15%;" >
@@ -127,6 +129,9 @@ function logoutHandler(){
   </div>
   <div>
     <AddLog v-if="displayItem==='AddCommunicationLog'" :map="map" :districtFind="district"> </AddLog>
+  </div>
+  <div>
+    <DeviceManagement v-if="displayItem==='DeviceManagement'"></DeviceManagement>
   </div>
 </template>
 

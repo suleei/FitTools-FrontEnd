@@ -2,7 +2,6 @@
 
 import {onMounted, onUnmounted, ref} from "vue";
 import AMapLoader from "@amap/amap-jsapi-loader";
-import * as events from "node:events";
 
 const {map,districtFind} = defineProps(['map','districtFind']);
 onMounted(() => {
@@ -126,43 +125,10 @@ function searchA() {
 <template>
   <div>
     <div id="table" style="text-align: center;">
-      <v-select
-        label="省/直辖市/自治区"
-        :items="provinceSelect"
-        item-title="name"
-        item-value="adcode"
-        variant="outlined"
-        v-model="province"
-        @update:model-value="searchP"
-      >
-      </v-select>
-      <v-select
-        label="市"
-        :items="citySelect"
-        item-title="name"
-        item-value="adcode"
-        variant="outlined"
-        v-model="city"
-        @update:model-value="searchC"
-      ></v-select>
-      <v-select
-        label="区/县"
-        :items="districtSelect"
-        item-title="name"
-        item-value="adcode"
-        variant="outlined"
-        v-model="district"
-        @update:model-value="searchD"
-      ></v-select>
-      <v-select
-        label="乡/镇"
-        :items="areaSelect"
-        item-title="name"
-        item-value="name"
-        variant="outlined"
-        v-model="area"
-        @update:model-value="searchA"
-      ></v-select>
+      <v-select label="省/直辖市/自治区" :items="provinceSelect" item-title="name" item-value="adcode" variant="outlined" v-model="province" @update:model-value="searchP"></v-select>
+      <v-select label="市" :items="citySelect" item-title="name" item-value="adcode" variant="outlined" v-model="city" @update:model-value="searchC"></v-select>
+      <v-select label="区/县" :items="districtSelect" item-title="name" item-value="adcode" variant="outlined" v-model="district" @update:model-value="searchD"></v-select>
+      <v-select label="乡/镇" :items="areaSelect" item-title="name" item-value="name" variant="outlined" v-model="area" @update:model-value="searchA"></v-select>
     </div>
   </div>
 
