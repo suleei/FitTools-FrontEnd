@@ -38,3 +38,10 @@ export function setDefaultDevice(id: String) {
     }
   })
 }
+
+export function getDefaultDevice(id: String) {
+  return requestInstance.request({
+    url:'/device/default',
+    method: "get",
+  })
+}

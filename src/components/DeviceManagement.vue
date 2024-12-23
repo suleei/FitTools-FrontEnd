@@ -104,7 +104,7 @@ function setDefaultDeviceHandler(id: String){
         <v-btn prepend-icon="mdi-plus" variant="outlined" class="infoItem" style="width: 50%;height: 3rem; border-radius: 1rem;color: grey;margin: 1% 0" @click="addDevice">
           添加
         </v-btn>
-        <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
+<!--        <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>-->
       </div>
     </div>
 
@@ -135,6 +135,7 @@ function setDefaultDeviceHandler(id: String){
   background: rgba(255, 255, 255, .1);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+  margin-left: 1rem;
 }
 
 #selectedItem:hover{

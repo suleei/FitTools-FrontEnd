@@ -18,6 +18,7 @@ let autoComplete = null
 let lnglat = ref(["",""])
 let marker = null
 let district = null
+let weather = null;
 
 const router = useRouter();
 
@@ -32,7 +33,7 @@ onMounted(() => {
   AMapLoader.load({
     key: "8a728012124faeb45f08ce08205a9358\t", // 申请好的Web端开发者Key，首次调用 load 时必填
     version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
-    plugins: ["AMap.Geocoder", "AMap.AutoComplete", "AMap.Marker","AMap.DistrictSearch"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
+    plugins: ["AMap.Geocoder", "AMap.AutoComplete", "AMap.Marker","AMap.DistrictSearch", "AMap.Weather"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
   })
     .then((AMap) => {
       map = new AMap.Map("container", {
@@ -47,6 +48,7 @@ onMounted(() => {
       geocoder = new AMap.Geocoder();
       autoComplete = new AMap.AutoComplete();
       marker = new AMap.Marker();
+      weather = new AMap.Weather();
       var opts = {
         subdistrict: 1,   //返回下一级行政区
         showbiz: false  //最后一级返回街道信息
@@ -128,7 +130,7 @@ function logoutHandler(){
     <UserInfoModification v-if="displayItem==='InfoModification'" @infoUpdate="userInfoReload" :geocoder="geocoder" :lnglat="lnglat" :autoComplete="autoComplete" :marker = "marker" :map="map"></UserInfoModification>
   </div>
   <div>
-    <AddLog v-if="displayItem==='AddCommunicationLog'" :map="map" :districtFind="district"> </AddLog>
+    <AddLog v-if="displayItem==='AddCommunicationLog'" :map="map" :districtFind="district" :geocoder="geocoder" :marker = "marker" :weather="weather" :autoComplete="autoComplete"> </AddLog>
   </div>
   <div>
     <DeviceManagement v-if="displayItem==='DeviceManagement'"></DeviceManagement>
