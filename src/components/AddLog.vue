@@ -33,6 +33,7 @@ let line = ref(
     end_lat:null
   }
 )
+let GeoUtil = null;
 let form = ref({
   start_date : null,
   start_time : null,
@@ -64,6 +65,7 @@ let form = ref({
   target_area: '',
   target_lng: null,
   target_lat: null,
+  distance: null
 })
 onMounted(() => {
   getUserInfo()
@@ -71,6 +73,15 @@ onMounted(() => {
     if (status == 'complete') {
       getData(result.districtList[0]);
     }
+  });
+  AMapLoader.load({
+    key: "8a728012124faeb45f08ce08205a9358\t", // 申请好的Web端开发者Key，首次调用 load 时必填
+    version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
+    plugins: ["AMap.GeometryUtil"], //需要使用的的插件列表，如比例尺'AMap.Scale'，支持添加多个如：['...','...']
+  }).then((AMap) => {
+    GeoUtil = AMap.GeometryUtil;
+  }).catch((e) => {
+    console.log(e);
   });
 });
 
@@ -210,7 +221,6 @@ function searchA() {
     if(areaSelect.value[i].name === area.value) {
       marker.setPosition(areaSelect.value[i].center);
       marker.setMap(map);
-      map.setFitView(marker, false, [50,0,1000,0]);
       line.value.end_lng = areaSelect.value[i].center.lng;
       line.value.end_lat = areaSelect.value[i].center.lat;
       break;
@@ -282,6 +292,7 @@ function logStoreHandler(){
     },1000)
     return;
   }
+  form.value.distance = GeoUtil.distance([form.value.source_longitude,form.value.source_latitude],[line.value.end_lng, line.value.end_lat])
   communicationLogRequest.addCommunicationLog(form.value).then(res=>{
     WarnInfo.value = "保存成功！"
     setTimeout(()=>{
