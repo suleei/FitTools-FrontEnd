@@ -10,6 +10,7 @@ declare module 'vue' {
     AddLog: typeof import('./src/components/AddLog.vue')['default']
     DeviceManagement: typeof import('./src/components/DeviceManagement.vue')['default']
     HelloWorld: typeof import('./src/views/LoginView.vue')['default']
+    LogManagement: typeof import('./src/components/LogManagement.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     UserInfoModification: typeof import('./src/components/UserInfoModification.vue')['default']

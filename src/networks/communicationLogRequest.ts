@@ -32,3 +32,33 @@ export function addCommunicationLog(form: any) {
     }
   })
 }
+
+export function getCommunicationLogs(pageNum: number) {
+  return requestInstance.request({
+    url:'/log',
+    method: "get",
+    params:{
+      pageNum: pageNum,
+    }
+  })
+}
+
+export function deleteCommunicationLog(logId: number) {
+  return requestInstance.request({
+    url:'/log',
+    method: "delete",
+    params:{
+      logId: logId,
+    }
+  })
+}
+
+export function getCommunicationLogDetail(logId: number) {
+  return requestInstance.request({
+    url:'/log/detail',
+    method: "get",
+    params:{
+      logId: logId,
+    }
+  })
+}

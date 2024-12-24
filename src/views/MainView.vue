@@ -5,6 +5,7 @@ import {useRouter} from "vue-router";
 import UserInfoModification from "@/components/UserInfoModification.vue";
 import * as userRequests from "@/networks/userRequests";
 import AddLog from "@/components/AddLog.vue";
+import LogManagement from "@/components/LogManagement.vue";
 
 let map:any = null;
 
@@ -94,6 +95,9 @@ function logoutHandler(){
       </v-btn>
     </div>
     <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='LogManagement'?'':'LogManagement'">
+        管理日志
+      </v-btn>
     </div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
@@ -134,6 +138,9 @@ function logoutHandler(){
   </div>
   <div>
     <DeviceManagement v-if="displayItem==='DeviceManagement'"></DeviceManagement>
+  </div>
+  <div>
+    <LogManagement v-if="displayItem==='LogManagement'" :map="map" :marker = "marker"></LogManagement>
   </div>
 </template>
 
