@@ -34,7 +34,7 @@ onUnmounted(()=>{
 })
 
 function loadPageLogs() {
-  communicationLogRequest.getCommunicationLogs(pageNum).then(res => {
+  communicationLogRequest.getGuestCommunicationLogs(pageNum).then(res => {
     pageLogList.value = res.data.data;
     console.log(pageLogList);
   })
@@ -82,7 +82,7 @@ function detailShowHandler(id:number){
     return;
   }
   currId = id;
-  communicationLogRequest.getCommunicationLogDetail(id).then(res=>{
+  communicationLogRequest.getGuestCommunicationLogDetail(id).then(res=>{
     detailInfo.value = res.data.data;
     detailInfo.value.source_address_des = detailInfo.value.source_district + detailInfo.value.source_address
     let seconds = detailInfo.value.duration/1000
@@ -138,6 +138,30 @@ function detailCloseHandler(){
   detailShow.value=false
   markerDestroyHandler()
 }
+
+function acceptLogHandler(logId:number){
+  communicationLogRequest.acceptLog(logId).then(res=>{
+    loadPageLogs();
+  }).catch(err=>{
+    WarnInfo.value = err.response.data.message
+    setTimeout(()=>{
+      WarnInfo.value = ""
+    },1000)
+    return;
+  })
+}
+
+function rejectLogHandler(logId:number){
+  communicationLogRequest.rejectLog(logId).then(res=>{
+    loadPageLogs();
+  }).catch(err=>{
+    WarnInfo.value = err.response.data.message
+    setTimeout(()=>{
+      WarnInfo.value = ""
+    },1000)
+    return;
+  })
+}
 </script>
 
 <template>
@@ -148,22 +172,20 @@ function detailCloseHandler(){
         <div style="width: 12%"><text style="word-wrap: break-word;">呼号</text></div>
         <div style="width: 50%"><text style="word-wrap: break-word;">位置</text></div>
         <div style="width: 10%"><text style="word-wrap: break-word;">距离(公里)</text></div>
-        <div style="width: 5%"><text style="word-wrap: break-word;">状态</text></div>
-        <div style="width: 5%"><text style="word-wrap: break-word;">删除</text></div>
+        <div style="width: 5%"><text style="word-wrap: break-word;">同意</text></div>
+        <div style="width: 5%"><text style="word-wrap: break-word;">拒绝</text></div>
       </div>
-      <div class="selectedItem" v-for="log in pageLogList" :key="log.id" style="width: 95%;color: gray;display: flex;flex-direction: row;justify-content: flex-start;margin:auto;height: 2rem" id="selectedItem">
-        <div style="width: 18%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{log.start_time}}</text></div>
-        <div style="width: 12%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{log.target_call_sign}}</text></div>
-        <div style="width: 50%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{log.target_address}}</text></div>
-        <div style="width: 10%" @click="detailShowHandler(log.id)" ><text style="word-wrap: break-word;">{{Math.round(log.distance/1000)}}</text></div>
-        <div style="width: 5%" @click="detailShowHandler(log.id)">
-<!--          <v-icon icon="mdi-help" class="selectItem" v-show="log.confirm_status==='N'"></v-icon>-->
-          <v-icon icon="mdi-check" class="selectItem" color="green" v-show="log.confirm_status==='Y'"></v-icon>
-          <v-icon icon="mdi-close" class="selectItem" color="red" v-show="log.confirm_status==='X'"></v-icon>
+      <div class="selectedItem" v-for="log in pageLogList" :key="log.id" style="width: 95%;color: gray;display: flex;flex-direction: row;justify-content: flex-start;margin:auto;height: 2rem" id="selectedItem" >
+          <div style="width: 18%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{log.start_time}}</text></div>
+          <div style="width: 12%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{log.target_call_sign}}</text></div>
+          <div style="width: 50%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{log.target_address}}</text></div>
+          <div style="width: 10%" @click="detailShowHandler(log.id)"><text style="word-wrap: break-word;">{{Math.round(log.distance/1000)}}</text></div>
+        <div style="width: 5%">
+          <v-icon icon="mdi-check" class="acceptIcon" @click="acceptLogHandler(log.id)"></v-icon>
         </div>
-        <div style="width: 5%"><v-icon icon="mdi-delete-outline" class="deleteIcon" @click="deleteLogHandler(log.id)"></v-icon></div>
-<!--        <v-icon :color="device.id === defaultDeviceId?'green':'gray'" icon="mdi-check" class="selectItem" @click="setDefaultDeviceHandler(device.id)"></v-icon>
-        <v-icon icon="mdi-delete-outline" class="deleteIcon" @click="deleteDeviceHandler(device.id)"></v-icon>-->
+        <div style="width: 5%">
+          <v-icon icon="mdi-close" class="deleteIcon" @click="rejectLogHandler(log.id)"></v-icon>
+        </div>
       </div>
       <div style="width: 50%;margin: auto;margin-bottom: 0.5rem">
         <v-btn  prepend-icon="mdi-minus" variant="outlined" class="infoItem" style="width: 45%;height: 2rem; border-radius: 0.5rem;color: grey;" @click="previousPageLoadHandler">
@@ -178,17 +200,17 @@ function detailCloseHandler(){
 
     <div class="Pad" style="left: 1%;top: 7%;width: 49%;" v-if="detailShow">
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;margin-top: 2rem">
-        <v-text-field  density="compact" style="height: 1rem" label="己方呼号" variant="outlined" prepend-inner-icon="mdi-alphabetical-variant" v-model="detailInfo.source_call_sign" readonly></v-text-field>
-        <v-text-field   density="compact" style="margin-left: 2%" label="己方设备(RIG)" variant="outlined" prepend-inner-icon="mdi-cellphone-basic" v-model="detailInfo.source_device" readonly></v-text-field>
-        <v-text-field   density="compact" style="margin-left: 2%" label="己方天线(ANT)" variant="outlined" prepend-inner-icon="mdi-antenna" v-model="detailInfo.source_antenna" readonly></v-text-field>
+        <v-text-field  density="compact" style="height: 1rem" label="己方呼号" variant="outlined" prepend-inner-icon="mdi-alphabetical-variant" v-model="detailInfo.target_call_sign" readonly></v-text-field>
+        <v-text-field   density="compact" style="margin-left: 2%" label="己方设备(RIG)" variant="outlined" prepend-inner-icon="mdi-cellphone-basic" v-model="detailInfo.target_device" readonly></v-text-field>
+        <v-text-field   density="compact" style="margin-left: 2%" label="己方天线(ANT)" variant="outlined" prepend-inner-icon="mdi-antenna" v-model="detailInfo.target_antenna" readonly></v-text-field>
       </div>
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
-        <v-text-field  density="compact" label="己方功率(PWR)" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="detailInfo.source_power" readonly></v-text-field>
+        <v-text-field  density="compact" label="己方功率(PWR)" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="detailInfo.target_power" readonly></v-text-field>
         <v-text-field density="compact"  style="margin-left: 2%" label="频率(MHz)" variant="outlined" prepend-inner-icon="mdi-sine-wave" v-model="detailInfo.frequency" readonly></v-text-field>
         <v-text-field density="compact" style="margin-left: 2%" label="模式(MODE)" variant="outlined" prepend-inner-icon="mdi-menu" v-model="detailInfo.mode" readonly></v-text-field>
       </div>
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
-        <v-text-field density="compact"  label="己方地址" variant="outlined" prepend-inner-icon="mdi-map-marker" v-model="detailInfo.source_address_des" readonly></v-text-field>
+        <v-text-field density="compact"  label="己方地址" variant="outlined" prepend-inner-icon="mdi-map-marker" v-model="detailInfo.target_address" readonly></v-text-field>
       </div>
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
         <v-text-field density="compact"  label="天气" variant="outlined" prepend-inner-icon="mdi-weather-cloudy" v-model="detailInfo.weather" readonly></v-text-field>
@@ -201,17 +223,17 @@ function detailCloseHandler(){
         <v-text-field density="compact" style="margin-left: 2%" label="通联距离" variant="outlined" prepend-inner-icon="mdi-map-marker-distance" v-model="detailInfo.distance" readonly></v-text-field>
       </div>
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
-        <v-text-field density="compact" label="对方呼号" variant="outlined" prepend-inner-icon="mdi-alphabetical-variant" v-model="detailInfo.target_call_sign" readonly></v-text-field>
-        <v-text-field density="compact"  style="margin-left: 2%" label="对方设备(RIG)" variant="outlined" prepend-inner-icon="mdi-cellphone-basic" v-model="detailInfo.target_device" readonly></v-text-field>
-        <v-text-field density="compact"  style="margin-left: 2%" label="对方天线(ANT)" variant="outlined" prepend-inner-icon="mdi-antenna" v-model="detailInfo.target_antenna" readonly></v-text-field>
+        <v-text-field density="compact" label="对方呼号" variant="outlined" prepend-inner-icon="mdi-alphabetical-variant" v-model="detailInfo.source_call_sign" readonly></v-text-field>
+        <v-text-field density="compact"  style="margin-left: 2%" label="对方设备(RIG)" variant="outlined" prepend-inner-icon="mdi-cellphone-basic" v-model="detailInfo.source_device" readonly></v-text-field>
+        <v-text-field density="compact"  style="margin-left: 2%" label="对方天线(ANT)" variant="outlined" prepend-inner-icon="mdi-antenna" v-model="detailInfo.source_antenna" readonly></v-text-field>
       </div>
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
-        <v-text-field density="compact"  label="对方功率(PWR)" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="detailInfo.target_power" readonly></v-text-field>
-        <v-text-field density="compact"  style="margin-left: 2%" label="己方信号报告(RST)" variant="outlined" prepend-inner-icon="mdi-chart-line" v-model="detailInfo.source_rst" readonly></v-text-field>
-        <v-text-field density="compact" style="margin-left: 2%" label="对方信号报告(RST)" variant="outlined" prepend-inner-icon="mdi-chart-line" v-model="detailInfo.target_rst" readonly></v-text-field>
+        <v-text-field density="compact"  label="对方功率(PWR)" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="detailInfo.source_power" readonly></v-text-field>
+        <v-text-field density="compact"  style="margin-left: 2%" label="己方信号报告(RST)" variant="outlined" prepend-inner-icon="mdi-chart-line" v-model="detailInfo.target_rst" readonly></v-text-field>
+        <v-text-field density="compact" style="margin-left: 2%" label="对方信号报告(RST)" variant="outlined" prepend-inner-icon="mdi-chart-line" v-model="detailInfo.source_rst" readonly></v-text-field>
       </div>
       <div style="width: 90%;margin:auto;display: flex;justify-content: center;">
-        <v-text-field  density="compact" label="对方地址" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="detailInfo.target_address" readonly></v-text-field>
+        <v-text-field  density="compact" label="对方地址" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="detailInfo.source_address_des" readonly></v-text-field>
       </div>
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
         <v-text-field  density="compact" label="备注" variant="outlined" prepend-inner-icon="mdi-account-outline" v-model="detailInfo.comments" readonly></v-text-field>
@@ -238,6 +260,10 @@ function detailCloseHandler(){
 
 .deleteIcon:hover{
   color: darkred;
+}
+
+.acceptIcon:hover{
+  color: green;
 }
 
 .selectedItem:hover{

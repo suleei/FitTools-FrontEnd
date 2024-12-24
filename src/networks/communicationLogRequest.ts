@@ -62,3 +62,43 @@ export function getCommunicationLogDetail(logId: number) {
     }
   })
 }
+
+export function getGuestCommunicationLogs(pageNum: number) {
+  return requestInstance.request({
+    url:'/log/guest',
+    method: "get",
+    params:{
+      pageNum: pageNum,
+    }
+  })
+}
+
+export function acceptLog(logId: number) {
+  return requestInstance.request({
+    url:'/log/accept',
+    method: "put",
+    params:{
+      logId: logId,
+    }
+  })
+}
+
+export function rejectLog(logId: number) {
+  return requestInstance.request({
+    url:'/log/reject',
+    method: "put",
+    params:{
+      logId: logId,
+    }
+  })
+}
+
+export function getGuestCommunicationLogDetail(logId: number) {
+  return requestInstance.request({
+    url:'/log/guest/detail',
+    method: "get",
+    params:{
+      logId: logId,
+    }
+  })
+}

@@ -99,7 +99,11 @@ function logoutHandler(){
         管理日志
       </v-btn>
     </div>
-    <div class="menuItem" ></div>
+    <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='GuestLogManagement'?'':'GuestLogManagement'">
+        待确认日志
+      </v-btn>
+    </div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
@@ -141,6 +145,9 @@ function logoutHandler(){
   </div>
   <div>
     <LogManagement v-if="displayItem==='LogManagement'" :map="map" :marker = "marker"></LogManagement>
+  </div>
+  <div>
+    <GuestLogManagement v-if="displayItem==='GuestLogManagement'" :map="map" :marker = "marker"></GuestLogManagement>
   </div>
 </template>
 
