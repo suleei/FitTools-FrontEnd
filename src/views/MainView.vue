@@ -4,9 +4,9 @@ import AMapLoader from "@amap/amap-jsapi-loader";
 import {useRouter} from "vue-router";
 import UserInfoModification from "@/components/UserInfoModification.vue";
 import * as userRequests from "@/networks/userRequests";
+import * as logConfirmRequest from "@/networks/logConfirmRequest";
 import AddLog from "@/components/AddLog.vue";
 import LogManagement from "@/components/LogManagement.vue";
-
 let map:any = null;
 
 const login = ref(false);
@@ -20,11 +20,33 @@ let lnglat = ref(["",""])
 let marker = null
 let district = null
 let weather = null;
-
+let stompClient = null;
+let clogs = null;
+let socket = null;
+let confirm_log = ref("0");
 const router = useRouter();
 
 onMounted(() => {
-  userInfoReload()
+  logConfirmRequest.getConfirmLog().then(response => {
+    confirm_log.value = response.data.data;
+  }).catch(error => {
+    console.log(error)
+  })
+  userRequests.getUserInfo().then((res) => {
+    userAvatar.value = res.data.data.avatar;
+    username.value = res.data.data.username;
+    let callSign = res.data.data.call_sign;
+    let socketUrl = "ws://localhost:8080/ws/log_confirm_notify/"+callSign;
+    socket = new WebSocket(socketUrl);
+    socket.onopen = () => {
+      console.log("Connection opened");
+    }
+    socket.onmessage = (res) => {
+      confirm_log.value = res.data;
+    }
+  }).catch((err) => {
+    console.log(err)
+  })
   if(sessionStorage.getItem("jwt")){
     login.value = true;
   }
@@ -83,6 +105,13 @@ function logoutHandler(){
   sessionStorage.removeItem("username");
   router.push({path:'/login'});
 }
+
+function confirmLogHandler(){
+  displayItem.value=displayItem.value==='LogManagement'?'':'LogManagement';
+  logConfirmRequest.deleteConfirmLog().then(response => {
+    confirm_log.value = "0";
+  })
+}
 </script>
 
 <template>
@@ -95,13 +124,14 @@ function logoutHandler(){
       </v-btn>
     </div>
     <div class="menuItem" >
-      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='LogManagement'?'':'LogManagement'">
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="">
         管理日志
       </v-btn>
     </div>
     <div class="menuItem" >
-      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='GuestLogManagement'?'':'GuestLogManagement'">
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="confirmLogHandler">
         待确认日志
+        <v-avatar color="red" size="x-small" v-show="confirm_log!=='0'">{{confirm_log}}</v-avatar>
       </v-btn>
     </div>
     <div class="menuItem" ></div>
