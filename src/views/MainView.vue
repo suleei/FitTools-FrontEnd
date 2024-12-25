@@ -107,7 +107,7 @@ function logoutHandler(){
 }
 
 function confirmLogHandler(){
-  displayItem.value=displayItem.value==='LogManagement'?'':'LogManagement';
+  displayItem.value=displayItem.value==='GuestLogManagement'?'':'GuestLogManagement';
   logConfirmRequest.deleteConfirmLog().then(response => {
     confirm_log.value = "0";
   })
@@ -124,7 +124,7 @@ function confirmLogHandler(){
       </v-btn>
     </div>
     <div class="menuItem" >
-      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="">
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='LogManagement'?'':'LogManagement'">
         管理日志
       </v-btn>
     </div>
