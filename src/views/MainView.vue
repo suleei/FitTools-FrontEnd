@@ -7,6 +7,7 @@ import * as userRequests from "@/networks/userRequests";
 import * as logConfirmRequest from "@/networks/logConfirmRequest";
 import AddLog from "@/components/AddLog.vue";
 import LogManagement from "@/components/LogManagement.vue";
+import NearByHamer from "@/components/NearByHamer.vue";
 let map:any = null;
 
 const login = ref(false);
@@ -38,9 +39,9 @@ onMounted(() => {
     let callSign = res.data.data.call_sign;
     let socketUrl = "ws://localhost:8080/ws/log_confirm_notify/"+callSign;
     socket = new WebSocket(socketUrl);
-    socket.onopen = () => {
+    /*socket.onopen = () => {
       console.log("Connection opened");
-    }
+    }*/
     socket.onmessage = (res) => {
       confirm_log.value = res.data;
     }
@@ -134,7 +135,11 @@ function confirmLogHandler(){
         <v-avatar color="red" size="x-small" v-show="confirm_log!=='0'">{{confirm_log}}</v-avatar>
       </v-btn>
     </div>
-    <div class="menuItem" ></div>
+    <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='NearByHammer'?'':'NearByHammer'">
+        附近的HAM
+      </v-btn>
+    </div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
@@ -178,6 +183,10 @@ function confirmLogHandler(){
   </div>
   <div>
     <GuestLogManagement v-if="displayItem==='GuestLogManagement'" :map="map" :marker = "marker"></GuestLogManagement>
+  </div>
+
+  <div>
+    <NearByHamer v-if="displayItem==='NearByHammer'" :map="map" ></NearByHamer>
   </div>
 </template>
 

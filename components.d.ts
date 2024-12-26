@@ -12,6 +12,7 @@ declare module 'vue' {
     GuestLogManagement: typeof import('./src/components/GuestLogManagement.vue')['default']
     HelloWorld: typeof import('./src/views/LoginView.vue')['default']
     LogManagement: typeof import('./src/components/LogManagement.vue')['default']
+    NearByHamer: typeof import('./src/components/NearByHamer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     UserInfoModification: typeof import('./src/components/UserInfoModification.vue')['default']

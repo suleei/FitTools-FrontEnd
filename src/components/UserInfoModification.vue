@@ -60,7 +60,6 @@ const emit = defineEmits(['infoUpdate'])
 
 onMounted(() => {
   userInfoReload()
-  captchaImgLoad()
 });
 
 function captchaImgLoad(){
@@ -268,6 +267,10 @@ function updateAddressHandler(){
   })
 }
 
+function emailClickHandler(){
+  modificationField.value=modificationField.value==='email'?'':'email'
+  captchaImgLoad()
+}
 /*function getLocation(){
   geocoder.getAddress(lnglat,function(status, result) {
     console.log(status, result);
@@ -291,7 +294,7 @@ function updateAddressHandler(){
       <div style="font-size: 3rem;color: grey" @click="modificationField=modificationField==='username'?'':'username'" class="hand-cursor">
         {{username}}
       </div>
-      <div style="margin-top: 1rem;" @click="modificationField=modificationField==='email'?'':'email'" class="hand-cursor">
+      <div style="margin-top: 1rem;" @click="emailClickHandler" class="hand-cursor">
         <div style="font-size: 1rem;color: grey">邮箱</div>
         <div style="font-size: 2rem;color: grey">{{email}}</div>
       </div>
@@ -334,7 +337,7 @@ function updateAddressHandler(){
       <v-btn  v-show="modifiedUserName" variant="plain" style="width: 50%; margin:auto;border: gray 1px solid;border-radius: 0.5rem;height: 3rem;margin-top: 1rem;margin-bottom: 1rem" @click="usernameModificationHandler">更改用户名</v-btn>
       <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
     </div>
-    <div v-show="modificationField==='email'" id = "emailModification"  class="Pad" style="display: flex;flex-direction: column">
+    <div v-if="modificationField==='email'" id = "emailModification"  class="Pad" style="display: flex;flex-direction: column">
       <div style="margin: auto;margin-top: 1rem;margin-bottom: 1rem;text-align: center;">
         <div style="font-size: 1rem;color: grey">当前邮箱</div>
         <div style="font-size: 2rem;color: grey">{{email}}</div>
@@ -372,7 +375,7 @@ function updateAddressHandler(){
       </div>
       <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
     </div>
-    <div id="newEmail" class="Pad" v-show="modificationField==='email'&& captchaObj.jwt">
+    <div id="newEmail" class="Pad" v-if="modificationField==='email'&& captchaObj.jwt">
       <div style="margin: auto;margin-top: 1rem;display: flex;flex-direction: column;align-items: center;">
         <div style="font-size: 1rem;color: grey">新邮箱</div>
         <v-text-field
@@ -404,7 +407,7 @@ function updateAddressHandler(){
           {{captchaObjN.buttonInfo}}
         </v-btn>
       </div>
-      <div style="width: 90%;display: flex;margin:auto;" v-show="captchaLineShowN">
+      <div style="width: 90%;display: flex;margin:auto;" v-if="captchaLineShowN">
         <v-text-field
           label="邮箱验证码"
           variant="outlined"
