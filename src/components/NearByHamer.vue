@@ -12,11 +12,13 @@ let hamInfo = ref({
   call_sign: null,
   distance: null
 })
+let timeArray = ref([])
 
 let markers = [];
 
 onMounted(()=>{
   loadActiveStatus();
+  timeArray.value = new Array(7*24).fill(false);
 })
 
 onUnmounted(()=>{
@@ -42,7 +44,16 @@ function loadActiveStatus() {
 }
 
 function activeHandler(){
-  NearByHamRequest.setStatusActive().then(res => {
+  let times = new Array(7).fill(0);
+  for(let i = 0; i < 7; i++) {
+    let num=0;
+    for (let j = 23; j >= 0; j--) {
+      num = num * 2;
+      if(timeArray.value[i*24+j]) num+=1;
+    }
+    times[i] = num;
+  }
+  NearByHamRequest.setStatusActive(times).then(res => {
     loadActiveStatus();
   }).catch(err=>{
     WarnInfo.value = err.response.data.message;
@@ -67,6 +78,7 @@ function inactiveHandler(){
 
 function getNearbyHamHandler(){
   NearByHamRequest.getNearByHam(distance.value).then(res=>{
+    console.log(res)
     showHams(res.data.data);
   }).catch(err=>{
     WarnInfo.value = err.response.data.message;
@@ -111,15 +123,31 @@ function showHams(group: any){
     }).catch((err) => {
     console.log(err);
   })
+}
 
+function timeSegmentClick(i:number, j:number){
+  console.log(i,j);
+  timeArray.value[(i-1)*24+(j-1)] = !timeArray.value[(i-1)*24+(j-1)]
 }
 </script>
 
 <template>
-  <div class="Pad" style="left: 1%;top: 7%;width: 19.6%;">
-    <div style="width: 50%;margin: auto;margin-top: 0.5rem;margin-bottom: 0.5rem;border-radius: 0.5rem;text-align:center;">
+  <div class="Pad" style="left: 1%;top: 7%;width: 29.4%;">
+    <div style="width: 90%;margin: auto;margin-top: 0.5rem;margin-bottom: 0.5rem;border-radius: 0.5rem;text-align:center;">
       <div v-show="!activeStatus" style="color: grey">激活后您的位置会被公开</div>
-      <v-btn v-show="!activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;" @click="activeHandler">激活</v-btn>
+      <div style="display: flex;flex-direction: column;">
+        <div style="display: flex;flex-direction: row;justify-content: space-between;margin-top: 1rem;margin-bottom: 1rem;">
+          <div style="width: 2rem"></div>
+          <div v-for="i in 25" style="width: 3rem;height: 0.5rem;font-size: 0.8rem;text-align: right" >{{i-1}}</div>
+        </div>
+        <div v-for="i in 7" style="display: flex;flex-direction: row;align-items: center; height: 1rem">
+          <div style="margin-right: 1rem">{{i}}</div>
+          <div v-for="j in 24" style="border: 1px solid grey;width: 3rem;height: 0.5rem" @click="timeSegmentClick(i,j)" >
+            <div style="height: 100%;width: 100%;background: greenyellow" v-show="timeArray[(i-1)*24+(j-1)]"></div>
+          </div>
+        </div>
+      </div>
+      <v-btn v-show="!activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;" @click="activeHandler">设置活跃时间并激活</v-btn>
       <v-btn v-show="activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;" @click="inactiveHandler">关闭</v-btn>
     </div>
     <div v-show="activeStatus" style="width: 90%;margin: auto;display: flex;flex-direction: row;justify-content: center;margin-top: 2rem">

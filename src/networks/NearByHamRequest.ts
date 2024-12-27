@@ -7,10 +7,13 @@ export function getActiveStatus(){
   })
 }
 
-export function setStatusActive(){
+export function setStatusActive(times: number[]){
   return requestInstance.request({
     url:'/ham/status',
-    method: "put",
+    method: "post",
+    data:{
+      times: times,
+    }
   })
 }
 
