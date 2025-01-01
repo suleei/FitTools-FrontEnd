@@ -17,6 +17,16 @@ export function setStatusActive(times: number[]){
   })
 }
 
+export function updateActiveTime(times: number[]){
+  return requestInstance.request({
+    url:'/ham/time',
+    method: "post",
+    data:{
+      times: times,
+    }
+  })
+}
+
 export function setStatusInactive(){
   return requestInstance.request({
     url:'/ham/status',
@@ -31,5 +41,12 @@ export function getNearByHam(distance: number){
     params:{
       distance:distance
     }
+  })
+}
+
+export function getActiveTime(){
+  return requestInstance.request({
+    url:'/ham/time',
+    method: "get"
   })
 }

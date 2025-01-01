@@ -13,12 +13,13 @@ let hamInfo = ref({
   distance: null
 })
 let timeArray = ref([])
+let GuestTimeArray = ref([])
 
 let markers = [];
 
 onMounted(()=>{
-  loadActiveStatus();
   timeArray.value = new Array(7*24).fill(false);
+  loadActiveStatus();
 })
 
 onUnmounted(()=>{
@@ -35,6 +36,28 @@ function markersDestroy(){
 function loadActiveStatus() {
   NearByHamRequest.getActiveStatus().then(res => {
     activeStatus.value = res.data.data;
+    if(activeStatus.value){
+      getActiveTime();
+    }
+  }).catch(err=>{
+    WarnInfo.value = err.response.data.message;
+    setTimeout(()=>{
+      WarnInfo.value = ""
+    },1000)
+  })
+}
+
+function getActiveTime(){
+  NearByHamRequest.getActiveTime().then(res => {
+    for(let i = 0; i < 7; i++) {
+      let num=res.data.data[i];
+      for (let j = 0; j <= 23; j++) {
+        if(num%2 == 1){
+          timeArray.value[i*24+j] = true;
+        }
+        num = num / 2;
+      }
+    }
   }).catch(err=>{
     WarnInfo.value = err.response.data.message;
     setTimeout(()=>{
@@ -68,6 +91,7 @@ function inactiveHandler(){
     loadActiveStatus();
     markersDestroy();
     hamInfo.value.call_sign = null;
+    timeArray.value = new Array(7*24).fill(false);
   }).catch(err=>{
     WarnInfo.value = err.response.data.message;
     setTimeout(()=>{
@@ -78,7 +102,6 @@ function inactiveHandler(){
 
 function getNearbyHamHandler(){
   NearByHamRequest.getNearByHam(distance.value).then(res=>{
-    console.log(res)
     showHams(res.data.data);
   }).catch(err=>{
     WarnInfo.value = err.response.data.message;
@@ -101,8 +124,19 @@ function showHams(group: any){
            position:[group[i].lng, group[i].lat],
          })
         newMarker.on("click", ()=>{
+          console.log(group[i]);
           hamInfo.value.call_sign = group[i].call_sign;
           hamInfo.value.distance = group[i].distance;
+          GuestTimeArray.value = new Array(7*24).fill(false);
+          for(let ii = 0; ii < 7; ii++) {
+            let num=group[i].active_time[ii];
+            for (let j = 0; j <= 23; j++) {
+              if(num%2 == 1){
+                GuestTimeArray.value[ii*24+j] = true;
+              }
+              num = num / 2;
+            }
+          }
         })
         newMarker.setMap(map);
         markers.push(newMarker);
@@ -119,15 +153,34 @@ function showHams(group: any){
       });
       map.add(circle);
       markers.push(circle);
-      map.setFitView(markers, false, [100,50,50,50]);//地图自适应
+      map.setFitView(markers, false, [100,50,700,50]);//地图自适应
     }).catch((err) => {
     console.log(err);
   })
 }
 
 function timeSegmentClick(i:number, j:number){
-  console.log(i,j);
   timeArray.value[(i-1)*24+(j-1)] = !timeArray.value[(i-1)*24+(j-1)]
+}
+
+function updateActiveTimeHandler(){
+  let times = new Array(7).fill(0);
+  for(let i = 0; i < 7; i++) {
+    let num=0;
+    for (let j = 23; j >= 0; j--) {
+      num = num * 2;
+      if(timeArray.value[i*24+j]) num+=1;
+    }
+    times[i] = num;
+  }
+  NearByHamRequest.updateActiveTime(times).then(res => {
+    loadActiveStatus();
+  }).catch(err=>{
+    WarnInfo.value = err.response.data.message;
+    setTimeout(()=>{
+      WarnInfo.value = ""
+    },1000)
+  })
 }
 </script>
 
@@ -148,7 +201,8 @@ function timeSegmentClick(i:number, j:number){
         </div>
       </div>
       <v-btn v-show="!activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;" @click="activeHandler">设置活跃时间并激活</v-btn>
-      <v-btn v-show="activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;" @click="inactiveHandler">关闭</v-btn>
+      <v-btn v-show="activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;margin-top: 0.5rem" @click="updateActiveTimeHandler">修改活跃时间</v-btn>
+      <v-btn v-show="activeStatus" variant="outlined" style="width: 100%;height: 2rem; border-radius: 0.5rem;color: grey;margin-top: 0.5rem" @click="inactiveHandler">关闭</v-btn>
     </div>
     <div v-show="activeStatus" style="width: 90%;margin: auto;display: flex;flex-direction: row;justify-content: center;margin-top: 2rem">
       <v-text-field  style="width: 70%" density="compact" label="距离(公里)" variant="outlined" prepend-inner-icon="mdi-social-distance-2-meters" v-model="distance"></v-text-field>
@@ -156,10 +210,22 @@ function timeSegmentClick(i:number, j:number){
     </div>
     <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
   </div>
-  <div class="Pad" style="left: 1%;top: 25%;width: 19.6%;" v-show="hamInfo.call_sign">
+  <div class="Pad" style="left: 1%;top: 45%;width: 29.4%;" v-show="hamInfo.call_sign">
     <div style="width: 90%;margin:auto;margin-top:1.5rem">
       <v-text-field density="compact"  label="呼号" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="hamInfo.call_sign" readonly></v-text-field>
       <v-text-field density="compact"  label="距离(公里)" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="hamInfo.distance" readonly></v-text-field>
+    </div>
+    <div style="display: flex;flex-direction: column;width: 90%;margin: auto;margin-bottom: 1rem">
+      <div style="display: flex;flex-direction: row;justify-content: space-between;margin-top: 1rem;margin-bottom: 1rem;">
+        <div style="width: 2rem"></div>
+        <div v-for="i in 25" style="width: 3rem;height: 0.5rem;font-size: 0.8rem;text-align: right" >{{i-1}}</div>
+      </div>
+      <div v-for="i in 7" style="display: flex;flex-direction: row;align-items: center; height: 1rem">
+        <div style="margin-right: 1rem">{{i}}</div>
+        <div v-for="j in 24" style="border: 1px solid grey;width: 3rem;height: 0.5rem"  >
+          <div style="height: 100%;width: 100%;background: grey;opacity: 30%" v-show="GuestTimeArray[(i-1)*24+(j-1)]"></div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
