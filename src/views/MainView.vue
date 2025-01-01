@@ -37,13 +37,19 @@ onMounted(() => {
     userAvatar.value = res.data.data.avatar;
     username.value = res.data.data.username;
     let callSign = res.data.data.call_sign;
-    let socketUrl = "ws://localhost:8080/ws/log_confirm_notify/"+callSign;
+    let socketUrl = "ws://localhost:8080/ws/"+callSign;
     socket = new WebSocket(socketUrl);
-    /*socket.onopen = () => {
+    socket.onopen = () => {
+      socket.send(JSON.stringify({
+        jwt: sessionStorage.getItem("jwt")
+      }))
       console.log("Connection opened");
-    }*/
+    }
     socket.onmessage = (res) => {
-      confirm_log.value = res.data;
+      let object = JSON.parse(res.data);
+      if(object.type === "NEW_CONFIRM_MESSAGE_NUM") {
+        confirm_log.value = object.formattedMessage;
+      }
     }
   }).catch((err) => {
     console.log(err)

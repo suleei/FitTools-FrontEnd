@@ -153,7 +153,7 @@ function showHams(group: any){
       });
       map.add(circle);
       markers.push(circle);
-      map.setFitView(markers, false, [100,50,700,50]);//地图自适应
+      map.setFitView(markers, false, [100,50,100,50]);//地图自适应
     }).catch((err) => {
     console.log(err);
   })
@@ -176,6 +176,7 @@ function updateActiveTimeHandler(){
   NearByHamRequest.updateActiveTime(times).then(res => {
     loadActiveStatus();
   }).catch(err=>{
+    loadActiveStatus();
     WarnInfo.value = err.response.data.message;
     setTimeout(()=>{
       WarnInfo.value = ""
@@ -215,7 +216,7 @@ function updateActiveTimeHandler(){
       <v-text-field density="compact"  label="呼号" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="hamInfo.call_sign" readonly></v-text-field>
       <v-text-field density="compact"  label="距离(公里)" variant="outlined" prepend-inner-icon="mdi-signal-cellular-2" v-model="hamInfo.distance" readonly></v-text-field>
     </div>
-    <div style="display: flex;flex-direction: column;width: 90%;margin: auto;margin-bottom: 1rem">
+    <div style="display: flex;flex-direction: column;width: 90%;margin: auto;">
       <div style="display: flex;flex-direction: row;justify-content: space-between;margin-top: 1rem;margin-bottom: 1rem;">
         <div style="width: 2rem"></div>
         <div v-for="i in 25" style="width: 3rem;height: 0.5rem;font-size: 0.8rem;text-align: right" >{{i-1}}</div>
@@ -226,6 +227,9 @@ function updateActiveTimeHandler(){
           <div style="height: 100%;width: 100%;background: grey;opacity: 30%" v-show="GuestTimeArray[(i-1)*24+(j-1)]"></div>
         </div>
       </div>
+    </div>
+    <div style="width: 90%;margin: auto;text-align: center;">
+      <v-btn variant="outlined" style="width: 50%;height: 2rem; border-radius: 0.5rem;color: grey;margin-top: 0.5rem;margin-bottom: 1rem;">沟通</v-btn>
     </div>
   </div>
 </template>
