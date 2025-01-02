@@ -26,7 +26,6 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 })
-let global = window
 const app = createApp(App)
 app.use(router)
 

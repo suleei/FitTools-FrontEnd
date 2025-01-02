@@ -230,7 +230,6 @@ function searchA() {
 
 function startTimeUpdateHandler(){
   let date = new Date();
-  console.log(date.getMonth());
   form.value.start_date = date.getFullYear().toString().padStart(4, '0') + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
   form.value.start_time = date.getHours() + ':' + date.getMinutes().toString().padStart(2, '0') + ':' + date.getSeconds().toString().padStart(2, '0');
 }

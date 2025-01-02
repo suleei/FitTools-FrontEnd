@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import * as NearByHamRequest from "@/networks/NearByHamRequest";
+import * as NearByHamRequest from "@/networks/nearByHamRequest";
+import * as chatRequest from "@/networks/chatRequest";
 import {onMounted, onUnmounted, ref} from "vue";
 import AMapLoader from "@amap/amap-jsapi-loader";
 
-const {map} = defineProps(['map']);
+const {map,socket, online_status} = defineProps(['map','socket','online_status']);
 
 let activeStatus = ref(false);
 let WarnInfo = ref("")
+let MessageWarnInfo = ref("")
 let distance = ref(5);
 let hamInfo = ref({
   call_sign: null,
@@ -14,8 +16,31 @@ let hamInfo = ref({
 })
 let timeArray = ref([])
 let GuestTimeArray = ref([])
+let chat = ref(false)
+let pre_target_call_sign = ref("");
+let target_call_sign = ref("")
+let target_show = ref("")
 
 let markers = [];
+
+let inputMessage = ref("");
+
+let messages = ref([
+  {message:"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈", time: "2021-12-12 12:21:21",owner : false,},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈", time: "2021-12-12 12:21:21", owner : true},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈", time: "2021-12-12 12:21:21", owner : true},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+  {message:"test", time: "2021-12-12 12:21:21", owner : false},
+])
 
 onMounted(()=>{
   timeArray.value = new Array(7*24).fill(false);
@@ -124,9 +149,9 @@ function showHams(group: any){
            position:[group[i].lng, group[i].lat],
          })
         newMarker.on("click", ()=>{
-          console.log(group[i]);
           hamInfo.value.call_sign = group[i].call_sign;
           hamInfo.value.distance = group[i].distance;
+          target_call_sign.value = group[i].call_sign;
           GuestTimeArray.value = new Array(7*24).fill(false);
           for(let ii = 0; ii < 7; ii++) {
             let num=group[i].active_time[ii];
@@ -153,7 +178,7 @@ function showHams(group: any){
       });
       map.add(circle);
       markers.push(circle);
-      map.setFitView(markers, false, [100,50,100,50]);//地图自适应
+      map.setFitView(markers, false, [100,50,600,600]);//地图自适应
     }).catch((err) => {
     console.log(err);
   })
@@ -180,6 +205,42 @@ function updateActiveTimeHandler(){
     WarnInfo.value = err.response.data.message;
     setTimeout(()=>{
       WarnInfo.value = ""
+    },1000)
+  })
+}
+
+function openChatWindowHandler(){
+  if(chat.value === false || chat.value === true && pre_target_call_sign.value !== target_call_sign.value){
+    chat.value = true;
+    target_show.value = target_call_sign.value;
+    socket.send(JSON.stringify({
+      active_target: target_call_sign.value
+    }))
+    pre_target_call_sign.value = target_call_sign.value;
+  }else{
+    chat.value = false;
+    socket.send(JSON.stringify({
+      active_target: "CLOSE_CHAT"
+    }))
+  }
+}
+
+function messageSendingHandler(){
+  let date = new Date();
+  let now_date = date.getFullYear().toString().padStart(4, '0') + '-' + (date.getMonth()+1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
+  let now_time = date.getHours() + ':' + date.getMinutes().toString().padStart(2, '0') + ':' + date.getSeconds().toString().padStart(2, '0');
+  messages.value.push({
+    message:inputMessage.value,
+    time: now_date+' '+now_time,
+    owner : true
+  });
+  chatRequest.sendMessage(now_date+' '+now_time, target_call_sign.value, inputMessage.value).then(res=>{
+    const element = document.getElementById("chat_window");
+    element.scrollTop = element.scrollHeight;
+  }).catch(err=>{
+    MessageWarnInfo.value = err.response.data.message;
+    setTimeout(()=>{
+      MessageWarnInfo.value = ""
     },1000)
   })
 }
@@ -229,8 +290,37 @@ function updateActiveTimeHandler(){
       </div>
     </div>
     <div style="width: 90%;margin: auto;text-align: center;">
-      <v-btn variant="outlined" style="width: 50%;height: 2rem; border-radius: 0.5rem;color: grey;margin-top: 0.5rem;margin-bottom: 1rem;">沟通</v-btn>
+      <v-btn variant="outlined" style="width: 50%;height: 2rem; border-radius: 0.5rem;color: grey;margin-top: 0.5rem;margin-bottom: 1rem;" @click="openChatWindowHandler">沟通</v-btn>
     </div>
+  </div>
+  <div class="Pad" style="left: 69.6%;top: 7%;width: 29.4%;height: 92%" v-if="chat">
+    <div style="width: 90%;height: 5%;font-size: 2rem;color: grey;margin: auto;display: flex;flex-direction: raw;justify-content: center;align-items: center;">
+      <div>{{target_show}}</div>
+      <v-avatar color="green" style="height: 1.5rem;width: 1.5rem;margin-left: 1rem" v-show="online_status"></v-avatar>
+      <v-avatar color="grey" style="height: 1.5rem;width: 1.5rem;margin-left: 1rem" v-show="!online_status"></v-avatar>
+    </div>
+    <div style="height: 85%;overflow: scroll;overflow-x:hidden;" id="chat_window">
+      <div v-for="message in messages" style="width: 96%;margin: auto;" >
+        <div style="font-size: 1.1rem;background-color: rgba(125, 125, 125, 0.2);border-radius: 0.5rem;margin: 0.5rem;width: 80%">
+          <div style="color: grey;margin-left: 1%">{{message.message}}</div>
+          <div style="color: grey;font-size: 0.8rem;text-align: right">
+            {{message.time}}
+          </div>
+        </div>
+        <div style="font-size: 1.1rem;background-color: rgba(125, 125, 125, 0.2);border-radius: 0.5rem;margin: 0.5rem;width: 80%;margin-left: 20%">
+          <div style="color: white;margin-left: 1%">{{message.message}}</div>
+          <div style="color: grey;font-size: 0.8rem;text-align: right">
+            {{message.time}}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height: 8%;width: 96%;margin: auto;display: flex;flex-direction: row;margin-top: 2%">
+      <v-text-field  variant="outlined" maxlength="100" counter style="width: 85%" v-model="inputMessage"></v-text-field>
+        <v-btn variant="outlined" style="width: 3rem;height:3rem;color: grey;margin-left: 2%;margin-top:1%;" icon="mdi-send" @click="messageSendingHandler">
+        </v-btn>
+    </div>
+    <div style="text-align: center;color: darkred;">{{MessageWarnInfo}}</div>
   </div>
 </template>
 
@@ -243,4 +333,14 @@ function updateActiveTimeHandler(){
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
+
+#chat_window {
+  overflow: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+#chat_window::-webkit-scrollbar {
+  display: none;
+}
+
 </style>
