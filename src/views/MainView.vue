@@ -26,6 +26,7 @@ let clogs = null;
 let socket = null;
 let confirm_log = ref("0");
 let online_status = ref(false)
+let nearByHamer = ref(null);
 const router = useRouter();
 
 onMounted(() => {
@@ -46,12 +47,13 @@ onMounted(() => {
       }))
     }
     socket.onmessage = (res) => {
-      console.log(res)
       let object = JSON.parse(res.data);
       if(object.type === "NEW_CONFIRM_MESSAGE_NUM") {
         confirm_log.value = object.formattedMessage;
       }else if(object.type === "TARGET_ONLINE_STATUS") {
         online_status.value = JSON.parse(object.formattedMessage);
+      }else if(object.type === "CHAT_MESSAGE") {
+        nearByHamer.value.insertMessage(object.formattedMessage);
       }
     }
     socket.onerror = (err) => {
@@ -199,7 +201,7 @@ function confirmLogHandler(){
   </div>
 
   <div>
-    <NearByHamer v-if="displayItem==='NearByHammer'" :map="map" :socket="socket" :online_status="online_status"></NearByHamer>
+    <NearByHamer v-if="displayItem==='NearByHammer'" :map="map" :socket="socket" :online_status="online_status" ref="nearByHamer"></NearByHamer>
   </div>
 </template>
 

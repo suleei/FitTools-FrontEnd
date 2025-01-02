@@ -4,6 +4,10 @@ import * as chatRequest from "@/networks/chatRequest";
 import {onMounted, onUnmounted, ref} from "vue";
 import AMapLoader from "@amap/amap-jsapi-loader";
 
+defineExpose({
+  insertMessage
+});
+
 const {map,socket, online_status} = defineProps(['map','socket','online_status']);
 
 let activeStatus = ref(false);
@@ -243,6 +247,19 @@ function messageSendingHandler(){
       MessageWarnInfo.value = ""
     },1000)
   })
+}
+
+function insertMessage(message:any){
+  message = JSON.parse(message);
+  messages.value.push({
+    message:message.message,
+    time: message.time,
+    owner : false
+  });
+  setTimeout(()=>{
+    const element = document.getElementById("chat_window");
+    element.scrollTop = element.scrollHeight;
+  },500)
 }
 </script>
 
