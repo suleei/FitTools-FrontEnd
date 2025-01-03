@@ -30,20 +30,6 @@ let markers = [];
 let inputMessage = ref("");
 
 let messages = ref([
-  {message:"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈", time: "2021-12-12 12:21:21",owner : false,},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈", time: "2021-12-12 12:21:21", owner : true},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈", time: "2021-12-12 12:21:21", owner : true},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
-  {message:"test", time: "2021-12-12 12:21:21", owner : false},
 ])
 
 onMounted(()=>{
@@ -221,6 +207,18 @@ function openChatWindowHandler(){
       active_target: target_call_sign.value
     }))
     pre_target_call_sign.value = target_call_sign.value;
+    chatRequest.getCachedMessages(target_call_sign.value).then(res=>{
+      messages.value = res.data.data;
+      setTimeout(()=>{
+        const element = document.getElementById("chat_window");
+        element.scrollTop = element.scrollHeight;
+      },5);
+    }).catch(err=>{
+      WarnInfo.value = err.response.data.message;
+      setTimeout(()=>{
+        WarnInfo.value = ""
+      },1000)
+    })
   }else{
     chat.value = false;
     socket.send(JSON.stringify({

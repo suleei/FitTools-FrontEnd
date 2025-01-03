@@ -11,3 +11,13 @@ export function sendMessage(time_str: string, target_call_sign : string, message
     }
   })
 }
+
+export function getCachedMessages(target_call_sign : string) {
+  return requestInstance.request({
+    url:'/chat/message/cached',
+    method: "get",
+    params: {
+      target_call_sign: target_call_sign ,
+    }
+  })
+}
