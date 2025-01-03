@@ -24,6 +24,7 @@ let chat = ref(false)
 let pre_target_call_sign = ref("");
 let target_call_sign = ref("")
 let target_show = ref("")
+let load_more = ref(true);
 
 let markers = [];
 
@@ -206,6 +207,7 @@ function openChatWindowHandler(){
     socket.send(JSON.stringify({
       active_target: target_call_sign.value
     }))
+    load_more.value = true;
     pre_target_call_sign.value = target_call_sign.value;
     chatRequest.getCachedMessages(target_call_sign.value).then(res=>{
       messages.value = res.data.data;
@@ -258,6 +260,23 @@ function insertMessage(message:any){
     const element = document.getElementById("chat_window");
     element.scrollTop = element.scrollHeight;
   },500)
+}
+
+function loadHistoryMessagesHandler(){
+    let timeBefore = null;
+    if(messages.value.length > 0) timeBefore = messages.value[0].time;
+    chatRequest.getHistoryMessages(target_call_sign.value, timeBefore).then(res=>{
+      if(res.data.data.length === 0){
+        load_more.value = false;
+        return;
+      }
+      messages.value = res.data.data.concat(messages.value);
+    }).catch(err=>{
+      MessageWarnInfo.value = err.response.data.message;
+      setTimeout(()=>{
+        MessageWarnInfo.value = ""
+      },1000)
+    })
 }
 </script>
 
@@ -315,14 +334,19 @@ function insertMessage(message:any){
       <v-avatar color="grey" style="height: 1.5rem;width: 1.5rem;margin-left: 1rem" v-show="!online_status"></v-avatar>
     </div>
     <div style="height: 85%;overflow: scroll;overflow-x:hidden;" id="chat_window">
+      <div style="width: 96%;margin: auto;text-align: center;">
+        <v-btn variant="plain" @click="loadHistoryMessagesHandler" v-show="load_more">
+          加载更多
+        </v-btn>
+      </div>
       <div v-for="message in messages" style="width: 96%;margin: auto;" >
-        <div style="font-size: 1.1rem;background-color: rgba(125, 125, 125, 0.2);border-radius: 0.5rem;margin: 0.5rem;width: 80%">
+        <div style="font-size: 1.1rem;background-color: rgba(125, 125, 125, 0.2);border-radius: 0.5rem;margin: 0.5rem;width: 80%" v-show="!message.owner">
           <div style="color: grey;margin-left: 1%">{{message.message}}</div>
           <div style="color: grey;font-size: 0.8rem;text-align: right">
             {{message.time}}
           </div>
         </div>
-        <div style="font-size: 1.1rem;background-color: rgba(125, 125, 125, 0.2);border-radius: 0.5rem;margin: 0.5rem;width: 80%;margin-left: 20%">
+        <div style="font-size: 1.1rem;background-color: rgba(125, 125, 125, 0.2);border-radius: 0.5rem;margin: 0.5rem;width: 80%;margin-left: 20%" v-show="message.owner">
           <div style="color: white;margin-left: 1%">{{message.message}}</div>
           <div style="color: grey;font-size: 0.8rem;text-align: right">
             {{message.time}}

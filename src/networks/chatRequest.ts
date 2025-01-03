@@ -21,3 +21,14 @@ export function getCachedMessages(target_call_sign : string) {
     }
   })
 }
+
+export function getHistoryMessages(target_call_sign : string, time_before: string) {
+  return requestInstance.request({
+    url:'/chat/message/history',
+    method: "get",
+    params: {
+      timeBefore: time_before,
+      targetCallSign: target_call_sign ,
+    }
+  })
+}
