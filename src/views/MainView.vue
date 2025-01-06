@@ -5,9 +5,9 @@ import {useRouter} from "vue-router";
 import UserInfoModification from "@/components/UserInfoModification.vue";
 import * as userRequests from "@/networks/userRequests";
 import * as logConfirmRequest from "@/networks/logConfirmRequest";
+import * as chatRequest from "@/networks/chatRequest";
 import AddLog from "@/components/AddLog.vue";
 import LogManagement from "@/components/LogManagement.vue";
-import NearByHamer from "@/components/NearByHamer.vue";
 let map:any = null;
 
 const login = ref(false);
@@ -25,11 +25,18 @@ let stompClient = null;
 let clogs = null;
 let socket = null;
 let confirm_log = ref("0");
+let messageCardinality = ref(0);
 let online_status = ref(false)
 let nearByHamer = ref(null);
+let chatList = ref(null);
 const router = useRouter();
 
 onMounted(() => {
+  chatRequest.getNotify().then(res => {
+    messageCardinality.value = res.data.data;
+  }).catch(err => {
+    console.log(err)
+  })
   logConfirmRequest.getConfirmLog().then(response => {
     confirm_log.value = response.data.data;
   }).catch(error => {
@@ -53,7 +60,12 @@ onMounted(() => {
       }else if(object.type === "TARGET_ONLINE_STATUS") {
         online_status.value = JSON.parse(object.formattedMessage);
       }else if(object.type === "CHAT_MESSAGE") {
-        nearByHamer.value.insertMessage(object.formattedMessage);
+        if(nearByHamer.value!= null) nearByHamer.value.insertMessage(object.formattedMessage);
+        if(chatList.value!= null) chatList.value.insertMessage(object.formattedMessage);
+      }else if(object.type === "MESSAGE_NOTIFY") {
+        let notifyInfo = JSON.parse(object.formattedMessage);
+        messageCardinality.value = notifyInfo.cardinality;
+        if(chatList.value!= null) chatList.value.messageNotifyHandler(notifyInfo.targetCallSign);
       }
     }
     socket.onerror = (err) => {
@@ -134,6 +146,11 @@ function confirmLogHandler(){
   <div id="container">
   </div>
   <div id="menu" style="overflow: hidden;display: flex;align-items: center">
+    <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='DeviceManagement'?'':'DeviceManagement'">
+        管理设备
+      </v-btn>
+    </div>
     <div class="menuItem">
       <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='AddCommunicationLog'?'':'AddCommunicationLog'">
         新建日志
@@ -158,10 +175,11 @@ function confirmLogHandler(){
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
-    <div class="menuItem" ></div>
     <div class="menuItem" >
-      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='DeviceManagement'?'':'DeviceManagement'">
-        管理设备
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='ChatList'?'':'ChatList'">
+          聊天消息
+        <v-avatar color="red" size="x-small" v-show="messageCardinality!==0">{{messageCardinality}}</v-avatar>
+
       </v-btn>
     </div>
   </div>
@@ -199,9 +217,11 @@ function confirmLogHandler(){
   <div>
     <GuestLogManagement v-if="displayItem==='GuestLogManagement'" :map="map" :marker = "marker"></GuestLogManagement>
   </div>
-
   <div>
     <NearByHamer v-if="displayItem==='NearByHammer'" :map="map" :socket="socket" :online_status="online_status" ref="nearByHamer"></NearByHamer>
+  </div>
+  <div>
+    <ChatList v-if="displayItem==='ChatList'" :socket="socket" :online_status="online_status" ref="chatList"></ChatList>
   </div>
 </template>
 

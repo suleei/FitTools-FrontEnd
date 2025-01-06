@@ -32,3 +32,27 @@ export function getHistoryMessages(target_call_sign : string, time_before: strin
     }
   })
 }
+
+export function getChatList() {
+  return requestInstance.request({
+    url:'/chat/list',
+    method: "get"
+  })
+}
+
+export function notifyConfirm(targetCallSign: string) {
+  return requestInstance.request({
+    url:'/chat/notify',
+    method: "put",
+    params:{
+      targetCallSign: targetCallSign,
+    }
+  })
+}
+
+export function getNotify() {
+  return requestInstance.request({
+    url:'/chat/notify',
+    method: "get"
+  })
+}

@@ -8,6 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AddLog: typeof import('./src/components/AddLog.vue')['default']
+    ChatList: typeof import('./src/components/ChatList.vue')['default']
     DeviceManagement: typeof import('./src/components/DeviceManagement.vue')['default']
     GuestLogManagement: typeof import('./src/components/GuestLogManagement.vue')['default']
     HelloWorld: typeof import('./src/views/LoginView.vue')['default']
