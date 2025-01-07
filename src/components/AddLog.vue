@@ -33,6 +33,7 @@ let line = ref(
     end_lat:null
   }
 )
+let publishActivity = ref(true)
 let GeoUtil = null;
 let form = ref({
   start_date : null,
@@ -65,7 +66,8 @@ let form = ref({
   target_area: '',
   target_lng: null,
   target_lat: null,
-  distance: null
+  distance: null,
+  publish_activity: false,
 })
 onMounted(() => {
   getUserInfo()
@@ -292,6 +294,7 @@ function logStoreHandler(){
     },1000)
     return;
   }
+  form.value.publish_activity = publishActivity.value;
   form.value.distance = GeoUtil.distance([form.value.source_longitude,form.value.source_latitude],[line.value.end_lng, line.value.end_lat])
   communicationLogRequest.addCommunicationLog(form.value).then(res=>{
     WarnInfo.value = "保存成功！"
@@ -414,11 +417,14 @@ function clearHandler(){
       <div style="width: 90%;display: flex;justify-content: center;margin: auto;">
         <v-text-field   label="备注" variant="outlined" prepend-inner-icon="mdi-account-outline" v-model="form.comments" counter maxlength="200"></v-text-field>
       </div>
-      <div style="width: 90%;margin:auto;display: flex;justify-content: center;">
-        <v-btn variant="outlined" style="width: 50%;height: 3.5rem;color: grey;margin-left: 25%" @click="logStoreHandler">保存日志</v-btn>
+      <div style="width: 90%;margin:auto;display: flex;justify-content: center;align-items: center">
+        <div style="width: 25%;height: 3rem;"><v-checkbox label="发布为活动" v-model="publishActivity" density="compact"></v-checkbox></div>
+        <v-btn variant="outlined" style="width: 50%;height: 3.5rem;color: grey;" @click="logStoreHandler">
+          <div v-show="WarnInfo===''">保存日志</div>
+          <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
+        </v-btn>
         <v-btn variant="outlined" style="width: 20%;height: 3.5rem;color: grey;margin-left: 5%" @click="clearHandler">下一条</v-btn>
       </div>
-      <div style="text-align: center;color: darkred;">{{WarnInfo}}</div>
     </div>
 
     <div id="locationModification" v-show="locationModificationEnabled">

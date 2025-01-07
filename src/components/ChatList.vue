@@ -209,7 +209,7 @@ function messageNotifyHandler(){
           </div>
         </div>
       </div>
-      <div style="height: 10%;width: 96%;margin: auto;display: flex;flex-direction: row;margin-top: 2%">
+      <div style="height: 9%;width: 96%;margin: auto;display: flex;flex-direction: row;margin-top: 2%">
         <v-text-field  variant="outlined" maxlength="100" counter style="width: 85%" v-model="inputMessage"></v-text-field>
         <v-btn variant="outlined" style="width: 3rem;height:3rem;color: grey;margin-left: 2%;margin-top:0.5%;" icon="mdi-send" @click="messageSendingHandler">
         </v-btn>

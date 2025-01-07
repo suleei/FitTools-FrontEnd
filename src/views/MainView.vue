@@ -172,7 +172,11 @@ function confirmLogHandler(){
         附近的HAM
       </v-btn>
     </div>
-    <div class="menuItem" ></div>
+    <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='Activity'?'':'Activity'">
+        活动
+      </v-btn>
+    </div>
     <div class="menuItem" ></div>
     <div class="menuItem" ></div>
     <div class="menuItem" >
@@ -222,6 +226,9 @@ function confirmLogHandler(){
   </div>
   <div>
     <ChatList v-if="displayItem==='ChatList'" :socket="socket" :online_status="online_status" ref="chatList"></ChatList>
+  </div>
+  <div>
+    <Activity v-if="displayItem==='Activity'" :map="map"></Activity>
   </div>
 </template>
 

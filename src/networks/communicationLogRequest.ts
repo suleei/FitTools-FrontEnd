@@ -29,6 +29,7 @@ export function addCommunicationLog(form: any) {
       end_time: form.end_date + ' ' + form.end_time,
       comments: form.comments,
       distance: form.distance,
+      publish_activity: form.publish_activity,
     }
   })
 }
