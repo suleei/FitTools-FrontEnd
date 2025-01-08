@@ -36,7 +36,6 @@ onUnmounted(()=>{
 function loadPageLogs() {
   communicationLogRequest.getCommunicationLogs(pageNum).then(res => {
     pageLogList.value = res.data.data;
-    console.log(pageLogList);
   })
 }
 

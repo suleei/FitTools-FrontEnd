@@ -20,7 +20,6 @@ onMounted(()=>{
 
 function devicesListReload(){
   deviceRequests.getDevices().then(res => {
-    console.log(res)
     deviceList.value = res.data.data.devices;
     defaultDeviceId.value = res.data.data.defaultDevice
   }).catch(error => {
