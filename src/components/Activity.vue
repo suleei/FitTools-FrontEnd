@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import {onUnmounted, ref} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import * as activityRequest from "@/networks/activityRequest";
 import AMapLoader from "@amap/amap-jsapi-loader";
 
-const {map} = defineProps(['map']);
+defineExpose({
+  initial_load
+});
+const {map,activity_mode} = defineProps(['map','activity_mode']);
 
 const items = ref([])
 let marks = [];
+
+onMounted(()=>{
+  initial_load()
+})
 
 onUnmounted(()=>{
   clearMarks();
@@ -14,7 +21,7 @@ onUnmounted(()=>{
 
 async function api (startTime: any, id: any) {
   return new Promise(resolve => {
-    activityRequest.getActivities(startTime,id).then((activities) => {
+    activityRequest.getActivities(startTime,id, activity_mode).then((activities) => {
       resolve(activities.data.data);
     })
   })
@@ -29,6 +36,20 @@ async function load ({ done }) {
   const res = await api(startTime,id)
   items.value.push(...res)
   done('ok')
+}
+
+function initial_load(mode: any){
+  let input_mode = null;
+  if(mode!=null) input_mode = mode;
+  else input_mode = activity_mode;
+  activityRequest.getActivities(null, null,input_mode).then((activities) => {
+     items.value =  activities.data.data;
+     if(input_mode==="commented") {
+       for(let item of items.value){
+         item.reddot=true;
+       }
+     }
+  })
 }
 
 function displayGeoInfo(activity: any) {
@@ -113,7 +134,11 @@ function openComment(activity: any) {
         activity.warn = null;
       },1000)
     })
+    activityRequest.confirmCommentActivity(activity.id).then((res) => {
+      activity.reddot = false;
+    })
   }
+
 }
 
 function deleteComment(activity:any, commentId: any){
@@ -131,12 +156,24 @@ function deleteComment(activity:any, commentId: any){
 function replyComment(activity:any, commenterCallSign: string){
   activity.reply = commenterCallSign;
 }
+
+function deleteActivity(activity: any){
+  let id = activity.id;
+  activityRequest.deleteActivity(id).then((res) => {
+    items.value = items.value.filter((activity) => activity.id !== id);
+  }).catch((err) => {
+    activity.warn = err.response.data.message
+    setTimeout(()=>{
+      activity.warn = null;
+    },1000);
+  })
+}
 </script>
 
 <template>
   <div>
     <div id="listPad" style="display:flex;flex-direction:column;align-items:center;">
-      <v-infinite-scroll :items="items" :onLoad="load" style="width:95%;caret-color: transparent;">
+      <v-infinite-scroll :items="items" :onLoad="load" style="width:95%;caret-color: transparent;" mode="manual">
         <template v-for="activity in items" :key="activity">
           <div style="border: 1px grey solid;padding: 0.5rem;margin-top: 0.5rem;margin-bottom: 0.5rem;border-radius: 0.8rem;">
             <div style="display: flex;flex-direction: row;align-items: center;cursor: pointer;" @click="displayGeoInfo(activity)">
@@ -164,14 +201,18 @@ function replyComment(activity:any, commenterCallSign: string){
               </div>
             </div>
             <div style="display: flex;align-items: center;">
-              <div style="display: flex; flex-direction: row;align-items: center">
+              <div style="display: flex; flex-direction: row;align-items: center;width: 20%">
                 <v-btn icon="mdi-thumb-up-outline" variant="text" @click="thumbsUp(activity)" v-show="!activity.thumbsed"></v-btn>
                 <v-btn icon="mdi-thumb-up" variant="text" @click="thumbsUp(activity)" v-show="activity.thumbsed"></v-btn>
                 <div style="color: grey;font-size: 1.4rem">{{activity.thumbsCount}}</div>
               </div>
-              <div style="display: flex; flex-direction: row;align-items: center">
+              <div style="display: flex; flex-direction: row;align-items: center;width: 20%">
                 <v-btn icon="mdi-comment-outline" variant="text" @click="openComment(activity)"></v-btn>
                 <div style="color: grey;font-size: 1.4rem">{{activity.commentsCount}}</div>
+              </div>
+              <div style="width: 60%;text-align:right;color: grey">
+                <v-avatar color="red" size="x-small" v-show="activity.reddot" style="height: 1rem;width: 1rem"></v-avatar>
+                <v-btn icon="mdi-close" variant="text" @click="deleteActivity(activity)" v-show="activity.deletable"></v-btn>
               </div>
             </div>
             <div v-show="activity.comment_enable" style="width: 90%;margin: auto">

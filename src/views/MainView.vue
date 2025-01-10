@@ -6,6 +6,7 @@ import UserInfoModification from "@/components/UserInfoModification.vue";
 import * as userRequests from "@/networks/userRequests";
 import * as logConfirmRequest from "@/networks/logConfirmRequest";
 import * as chatRequest from "@/networks/chatRequest";
+import * as activityRequest from "@/networks/activityRequest";
 import AddLog from "@/components/AddLog.vue";
 import LogManagement from "@/components/LogManagement.vue";
 let map:any = null;
@@ -25,15 +26,23 @@ let stompClient = null;
 let clogs = null;
 let socket = null;
 let confirm_log = ref("0");
+let commentedActivityCardinality = ref(0);
 let messageCardinality = ref(0);
 let online_status = ref(false)
 let nearByHamer = ref(null);
 let chatList = ref(null);
+let activity = ref(null);
+let activity_mode = ref("")
 const router = useRouter();
 
 onMounted(() => {
   chatRequest.getNotify().then(res => {
     messageCardinality.value = res.data.data;
+  }).catch(err => {
+    console.log(err)
+  })
+  activityRequest.getCommentedCardinality().then(res => {
+    commentedActivityCardinality.value = res.data.data;
   }).catch(err => {
     console.log(err)
   })
@@ -66,6 +75,9 @@ onMounted(() => {
         let notifyInfo = JSON.parse(object.formattedMessage);
         messageCardinality.value = notifyInfo.cardinality;
         if(chatList.value!= null) chatList.value.messageNotifyHandler(notifyInfo.targetCallSign);
+      }else if(object.type === "COMMENT_NOTIFY") {
+        let notifyInfo = JSON.parse(object.formattedMessage);
+        commentedActivityCardinality.value = notifyInfo;
       }
     }
     socket.onerror = (err) => {
@@ -140,6 +152,18 @@ function confirmLogHandler(){
     confirm_log.value = "0";
   })
 }
+
+function activityDisplayHandler(mode:string){
+    if(displayItem.value!=="Activity"){
+      activity_mode.value= mode;
+      displayItem.value="Activity"
+    }else{
+      if(mode !== activity_mode.value){
+        activity_mode.value=mode;
+        activity.value.initial_load(mode);
+      }else displayItem.value="";
+    }
+}
 </script>
 
 <template>
@@ -173,17 +197,21 @@ function confirmLogHandler(){
       </v-btn>
     </div>
     <div class="menuItem" >
-      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='Activity'?'':'Activity'">
-        活动
-      </v-btn>
+        <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="activityDisplayHandler('all')">
+          活动
+        </v-btn>
     </div>
     <div class="menuItem" ></div>
-    <div class="menuItem" ></div>
+    <div class="menuItem" >
+      <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="activityDisplayHandler('commented')">
+        评论
+        <v-avatar color="red" size="x-small" v-show="commentedActivityCardinality!==0">{{commentedActivityCardinality}}</v-avatar>
+      </v-btn>
+    </div>
     <div class="menuItem" >
       <v-btn variant="plain" style="width: 100%;height: 100%;color: gray" @click="displayItem=displayItem==='ChatList'?'':'ChatList'">
           聊天消息
         <v-avatar color="red" size="x-small" v-show="messageCardinality!==0">{{messageCardinality}}</v-avatar>
-
       </v-btn>
     </div>
   </div>
@@ -197,7 +225,7 @@ function confirmLogHandler(){
         <text style="margin-left: 1rem"> {{username}} </text>
       </v-btn>
     </div>
-    <div style="height: 66.6%" id="infoPad" v-show="infoPadDisplay" @mouseover="infoPadDisplay= true" @mouseout="infoPadDisplay= false">
+    <div style="height: 66.6%" class="infoPad" v-show="infoPadDisplay" @mouseover="infoPadDisplay= true" @mouseout="infoPadDisplay= false">
       <v-btn variant="plain" class="infoItem" style="width: 100%;height: 50%;border-radius: 1rem;" @click="displayItem=displayItem==='InfoModification'?'':'InfoModification'">
         修改个人信息
       </v-btn>
@@ -228,7 +256,7 @@ function confirmLogHandler(){
     <ChatList v-if="displayItem==='ChatList'" :socket="socket" :online_status="online_status" ref="chatList"></ChatList>
   </div>
   <div>
-    <Activity v-if="displayItem==='Activity'" :map="map"></Activity>
+    <Activity v-if="displayItem==='Activity'" :map="map" :activity_mode="activity_mode" ref="activity"></Activity>
   </div>
 </template>
 
@@ -277,7 +305,7 @@ function confirmLogHandler(){
   z-index: 100;
 }
 
-#infoPad{
+.infoPad{
   height: 50%;
   width: 100%;
   border-radius: 1rem;
@@ -286,5 +314,7 @@ function confirmLogHandler(){
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
+
+
 
 </style>

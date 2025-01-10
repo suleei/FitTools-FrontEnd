@@ -1,12 +1,16 @@
 import requestInstance from "@/networks/request";
 
-export function getActivities(startTime: any, id: any) {
+
+export function getActivities(startTime: any, id: any, activity_mode: string) {
+  let commented = false;
+  if(activity_mode === 'commented') commented = true;
   return requestInstance.request({
     url:'/activity',
     method: "get",
     params:{
       startTime:startTime,
-      id:id
+      id:id,
+      commented: commented,
     }
   })
 }
@@ -50,6 +54,33 @@ export function deleteComment(commentId: number) {
     method: "delete",
     params: {
       commentId: commentId
+    }
+  })
+}
+
+export function deleteActivity(id: number) {
+  return requestInstance.request({
+    url:'/activity',
+    method: "delete",
+    params: {
+      id: id
+    }
+  })
+}
+
+export function getCommentedCardinality() {
+  return requestInstance.request({
+    url:'/activity/commented/cardinality',
+    method: "get"
+  })
+}
+
+export function confirmCommentActivity(activityId: number) {
+  return requestInstance.request({
+    url:'/activity/commented',
+    method: "delete",
+    params:{
+      activityId:activityId
     }
   })
 }
